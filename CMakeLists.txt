@@ -1,0 +1,44 @@
+cmake_minimum_required(VERSION 3.15)
+project(dualsense VERSION 1.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+file(GLOB_RECURSE SOURCE_FILES
+    ${PROJECT_SOURCE_DIR}/src/*.cpp
+    ${PROJECT_SOURCE_DIR}/src/*.h
+)
+
+# Create the static lib
+add_library(dualsense STATIC ${SOURCE_FILES})
+
+target_include_directories(dualsense PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+# to avoid dllimport conflicts
+target_compile_definitions(dualsense PUBLIC DS5W_BUILD_LIB)
+
+# link necessary Windows libs
+target_link_libraries(dualsense
+    setupapi
+    hid
+    cfgmgr32
+)
+
+# skip MSVC warnings
+if (MSVC)
+    target_compile_options(dualsense PRIVATE /W4)
+else()
+    target_compile_options(dualsense PRIVATE -Wall -Wextra -pedantic -Werror)
+endif()
+
+add_executable(dualsense-test test/main.cpp)
+
+target_include_directories(dualsense-test PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+target_link_libraries(dualsense-test PRIVATE dualsense)
+

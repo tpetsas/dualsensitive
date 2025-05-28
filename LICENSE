@@ -2,6 +2,17 @@ MIT License
 
 Copyright (c) 2025 Thanasis Petsas
 
+MIT License
+
+----------------------------------- Info -----------------------------------
+Only the implementation is licensed under the MIT license. The protocol of the 
+DualSense 5 controller has been discovered independently and collectively by
+several people. You can find my sources in the GitHub repository.
+----------------------------------------------------------------------------
+
+Copyright (c) 2020 Ludwig Füchsl
+Modifications copyright (c) 2025 Thanos Petsas
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
