@@ -4,14 +4,15 @@ Windows C++ API for controlling the PS5 DualSense controller
 
 ## About
 
-This project is a copy of [DualSense-Windows], by Ludwig Füchsl ([Ohjurot]).
+This project is a copy of [DualSense-Windows][Dualsense-github],
+by Ludwig Füchsl ([Ohjurot][Ohjurot-github]).
 I just added a minimal CMake build to speed-up the building process and several
 adaptive trigger profiles (e.g., specific profiles for several weapon types)
 that could be handy for anyone that wants to either extend their games adding
 those or serve as a base for mods, game integrations, or tooling.
 
-[DualSense-Windows](https://github.com/Ohjurot/DualSense-Windows)
-[Ohjurot](https://github.com/Ohjurot)
+[DualSense-github]: https://github.com/Ohjurot/DualSense-Windows
+[Ohjurot-github]: https://github.com/Ohjurot
 
 
 ## Build Instructions
