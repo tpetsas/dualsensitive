@@ -45,13 +45,16 @@ class Console {
 		HANDLE consoleHandle;
 };
 
+#define NEW_TRIGGERS 1
 int main(int argc, char** argv){
+#if 0
     dualsense::init();
     dualsense::ensureConnected();
     std::cout << "is controller connected: " << dualsense::isConnected() << std::endl;
     dualsense::terminate();
     std::cout << "is controller connected: " << dualsense::isConnected() << std::endl;
     return 0;
+#endif
 	// Console
 	Console console;
 	wstrBuilder builder;
@@ -184,23 +187,22 @@ int main(int argc, char** argv){
 					outState.playerLeds.bitmask = 0;
 				}
 #endif
+
+#if NEW_TRIGGERS
+                outState.triggerSettingEnabled = true;
+                outState.leftTriggerSetting.profile = TriggerProfile::GameCube;
+                outState.rightTriggerSetting.profile = TriggerProfile::Medium;
+
+#else
+                outState.triggerSettingEnabled = false;
 				// Set force
 				if (inState.rightTrigger == 0xFF) {
 					rType = DS5W::TriggerEffectType::ContinuousResitance;
 				    //rType = DS5W::TriggerEffectType::Hardest;
 				} else if (inState.rightTrigger == 0x00) {
-					//rType = DS5W::TriggerEffectType::NoResitance;
-					rType = DS5W::TriggerEffectType::ContinuousResitance;
+					rType = DS5W::TriggerEffectType::NoResitance;
 				}
-#if 0
-				// Mic led
-				if (inState.buttonsB & DS5W_ISTATE_BTN_B_MIC_BUTTON) {
-					outState.microphoneLed = DS5W::MicLed::ON;
-				}
-				else if (inState.buttonsB & DS5W_ISTATE_BTN_B_PLAYSTATION_LOGO) {
-					outState.microphoneLed = DS5W::MicLed::OFF;
-				}
-#endif
+
 				// Left trigger is clicky / section
 				outState.leftTriggerEffect.effectType = DS5W::TriggerEffectType::GameCube;
 				//outState.leftTriggerEffect.effectType = DS5W::TriggerEffectType::SectionResitance;
@@ -212,6 +214,7 @@ int main(int argc, char** argv){
 				outState.rightTriggerEffect.Continuous.force = 0xFF;
 				outState.rightTriggerEffect.Continuous.startPosition = 0x00;				
 
+#endif
 				DS5W::setDeviceOutputState(&con, &outState);
 			}
 			else {

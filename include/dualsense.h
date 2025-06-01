@@ -45,8 +45,8 @@ enum class TriggerMode : uint8_t {
 // sources:
 // * DualsenseX: https://github.com/Paliverse/DualSenseX
 // * DualsenseY: https://github.com/WujekFoliarz/DualSenseY-v2
-enum class TriggerProfile : uint8_t {
-    Neutral = 0,
+enum class TriggerProfile : int8_t {
+    Normal = 0,
 
     GameCube,
 
@@ -82,8 +82,10 @@ enum class TriggerProfile : uint8_t {
     SemiAutomaticGun,
     AutomaticGun,
 
-    Custom
+    Custom,
 };
+
+void setTriggerProfile(unsigned char *buffer, TriggerProfile profile);
 
 namespace dualsense {
 

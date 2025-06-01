@@ -267,7 +267,7 @@ namespace DS5W {
 
     // new structure for more options based on what's defind in dualsense.h
 	typedef struct _TriggerSetting {
-        TriggerMode mode;
+        TriggerProfile profile;
         std::vector<unsigned char> extras;
     } TriggerSetting;
 
@@ -431,6 +431,12 @@ namespace DS5W {
 		/// Effect of right trigger
 		/// </summary>
 		TriggerEffect rightTriggerEffect;
+
+        // This is newly added her to be able to choose from
+        // a wider range of trigger options declared in dualsense.h
+        bool triggerSettingEnabled;
+        TriggerSetting leftTriggerSetting;
+        TriggerSetting rightTriggerSetting;
 
 	} DS5OutputState;
 }

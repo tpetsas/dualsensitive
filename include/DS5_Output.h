@@ -4,6 +4,7 @@
 
 	Contributors of this file:
 	11.2020 Ludwig Füchsl
+	06.2025 Thanasis Petsas
 
 	Licensed under the MIT License (To be found in repository root directory)
 */
@@ -30,5 +31,8 @@ namespace __DS5W {
 		/// <param name="ptrEffect">Pointer to effect to be applied</param>
 		/// <param name="buffer">Buffer for trigger parameters</param>
 		void processTrigger(DS5W::TriggerEffect* ptrEffect, unsigned char* buffer);
+
+        // new function to process the new trigger settings
+        void processTriggerSetting(DS5W::TriggerSetting *setting, unsigned char *buffer);
 	}
 }

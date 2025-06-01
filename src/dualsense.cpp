@@ -70,27 +70,44 @@ int scanControllers(std::vector<DS5W::DeviceEnumInfo>& infosVector) {
     return 0;
 }
 
-#define TRIGGER_EXTRAS_SZ 11
+#define TRIGGER_BUFFER_SZ 11
 
-void setTrigger(TriggerProfile profile) {
-    unsigned char buffer[TRIGGER_EXTRAS_SZ] = {};
-    int i=0;
 
+// inner function to be callse by processTriggerSetting() in DS5_Output.cpp
+void setTriggerProfile(unsigned char *buffer, TriggerProfile profile) {
+    int lastIdx = 0;
     switch (profile) {
         case TriggerProfile::GameCube:
             buffer[0] = static_cast<unsigned char>(TriggerMode::Pulse);
             buffer[1] = 144;
             buffer[2] = 160;
             buffer[3] = 255;
+            lastIdx = 3;
             break;
         case TriggerProfile::VerySoft:
             buffer[0] = static_cast<unsigned char>(TriggerMode::Pulse);
             buffer[1] = 128;
             buffer[2] = 160;
             buffer[3] = 255;
+            lastIdx = 3;
             break;
         case TriggerProfile::Soft:
+            buffer[0] = static_cast<unsigned char>(TriggerMode::Rigid_A);
+            buffer[1] = 69;
+            buffer[2] = 160;
+            buffer[3] = 255;
+            lastIdx = 3;
+            break;
         case TriggerProfile::Medium:
+            buffer[0] = static_cast<unsigned char>(TriggerMode::Pulse_A);
+            buffer[1] = 2;
+            buffer[2] = 35;
+            buffer[3] = 1;
+            buffer[4] = 6;
+            buffer[5] = 6;
+            buffer[6] = 1;
+            buffer[7] = 33;
+            lastIdx = 7;
         case TriggerProfile::Hard:
         case TriggerProfile::VeryHard:
         case TriggerProfile::Hardest:
@@ -112,10 +129,13 @@ void setTrigger(TriggerProfile profile) {
         case TriggerProfile::SemiAutomaticGun:
         case TriggerProfile::AutomaticGun:
         case TriggerProfile::Custom:
-        case TriggerProfile::Neutral:
+        case TriggerProfile::Normal:
             [[fallthrough]];
         default:
             break;
+    }
+    for (int i=lastIdx+1; i<TRIGGER_BUFFER_SZ; i++) {
+        buffer[i] = 0;
     }
 }
 

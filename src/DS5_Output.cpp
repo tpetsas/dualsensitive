@@ -1,4 +1,5 @@
 #include "DS5_Output.h"
+#include "log.h"
 
 void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS5OutputState* ptrOutputState) {
 	// Feature mask
@@ -34,20 +35,19 @@ void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS
 	// Adaptive Triggers
     // TODO:
     // prioritize TriggerSetting parsing over TriggerEffect here!
-    // check if mode is different than unset
-	processTrigger(&ptrOutputState->leftTriggerEffect, &hidOutBuffer[0x15]);
-	processTrigger(&ptrOutputState->rightTriggerEffect, &hidOutBuffer[0x0A]);
+    if (ptrOutputState->triggerSettingEnabled) {
+        DEBUG_PRINT("triggerSettingsEnabled found!");
+        processTriggerSetting(&ptrOutputState->leftTriggerSetting, &hidOutBuffer[0x15]);
+        processTriggerSetting(&ptrOutputState->rightTriggerSetting, &hidOutBuffer[0x0A]);
+    } else {
+        processTrigger(&ptrOutputState->leftTriggerEffect, &hidOutBuffer[0x15]);
+        processTrigger(&ptrOutputState->rightTriggerEffect, &hidOutBuffer[0x0A]);
+    }
 }
 
-#if 0
-void __DS5W::Output::processTriggerProfile(TriggerProfile profile) {
-    return;
+void __DS5W::Output::processTriggerSetting(DS5W::TriggerSetting *setting, unsigned char *buffer) {
+    setTriggerProfile(buffer, setting->profile);
 }
-
-void __DS5W::Output::processTriggerMode(TriggerMode mode, std::vector extras) {
-    return;
-}
-#endif
 
 void __DS5W::Output::processTrigger(DS5W::TriggerEffect* ptrEffect, unsigned char* buffer) {
 	// Switch on effect
