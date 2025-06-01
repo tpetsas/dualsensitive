@@ -32,9 +32,22 @@ void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS
 	hidOutBuffer[0x2E] = ptrOutputState->lightbar.b;
 
 	// Adaptive Triggers
+    // TODO:
+    // prioritize TriggerSetting parsing over TriggerEffect here!
+    // check if mode is different than unset
 	processTrigger(&ptrOutputState->leftTriggerEffect, &hidOutBuffer[0x15]);
 	processTrigger(&ptrOutputState->rightTriggerEffect, &hidOutBuffer[0x0A]);
 }
+
+#if 0
+void __DS5W::Output::processTriggerProfile(TriggerProfile profile) {
+    return;
+}
+
+void __DS5W::Output::processTriggerMode(TriggerMode mode, std::vector extras) {
+    return;
+}
+#endif
 
 void __DS5W::Output::processTrigger(DS5W::TriggerEffect* ptrEffect, unsigned char* buffer) {
 	// Switch on effect
@@ -50,6 +63,7 @@ void __DS5W::Output::processTrigger(DS5W::TriggerEffect* ptrEffect, unsigned cha
 			break;
 
 		// Section
+        // Pulse
 		case DS5W::TriggerEffectType::SectionResitance:
 			// Mode
 			buffer[0x00] = 0x02;
@@ -84,7 +98,36 @@ void __DS5W::Output::processTrigger(DS5W::TriggerEffect* ptrEffect, unsigned cha
 			buffer[0x00] = 0xFC;
 
 			break;
-
+        // Custom Profiles
+        // GameCube
+		case DS5W::TriggerEffectType::GameCube:
+			// Mode Pulse
+			buffer[0] = 0x02;
+			// Parameters
+			buffer[1] = 144;
+			buffer[2] = 160;
+			buffer[3] = 255;
+            // the rest 3 - 10 should be 0
+            for (int i=4; i<=10; i++) {
+			    buffer[i] = 0;
+            }
+			break;
+		case DS5W::TriggerEffectType::Hardest:
+			// Mode Pulse
+			buffer[0] = 0x02;
+			// Parameters
+			buffer[1] = 0;
+			buffer[2] = 255;
+			buffer[3] = 255;
+			buffer[4] = 255;
+			buffer[5] = 255;
+			buffer[6] = 255;
+			buffer[7] = 255;
+            // the rest 3 - 10 should be 0
+            for (int i=8; i<=10; i++) {
+			    buffer[i] = 0;
+            }
+			break;
 		// No resistance / default
 		case DS5W::TriggerEffectType::NoResitance:
 			__fallthrough;

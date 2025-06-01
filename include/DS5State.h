@@ -4,6 +4,7 @@
 
 	Contributors of this file:
 	11.2020 Ludwig Füchsl
+    05.2025 Thanasis Petsas
 
 	Licensed under the MIT License (To be found in repository root directory)
 */
@@ -36,6 +37,8 @@
 #define DS5W_OSTATE_PLAYER_LED_MIDDLE 0x04
 #define DS5W_OSTATE_PLAYER_LED_MIDDLE_RIGHT 0x08
 #define DS5W_OSTATE_PLAYER_LED_RIGHT 0x10
+
+#include <dualsense.h>
 
 namespace DS5W {
 
@@ -162,6 +165,9 @@ namespace DS5W {
 		/// Calibrate triggers
 		/// </summary>
 		Calibrate = 0xFC,
+        // just for testing
+		GameCube = 0x3,
+        Hardest = 0x4
 	} TriggerEffectType;
 
 	/// <summary>
@@ -258,6 +264,12 @@ namespace DS5W {
 			} EffectEx;
 		};
 	} TriggerEffect;
+
+    // new structure for more options based on what's defind in dualsense.h
+	typedef struct _TriggerSetting {
+        TriggerMode mode;
+        std::vector<unsigned char> extras;
+    } TriggerSetting;
 
 	/// <summary>
 	/// Led brightness
