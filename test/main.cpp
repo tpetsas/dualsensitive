@@ -47,11 +47,17 @@ class Console {
 
 #define NEW_TRIGGERS 1
 int main(int argc, char** argv){
-#if 0
+#if 1
     dualsense::init();
     dualsense::ensureConnected();
     std::cout << "is controller connected: " << dualsense::isConnected() << std::endl;
-    dualsense::terminate();
+    dualsense::setLeftCustomTrigger(TriggerMode::Rigid_A, {71, 96, 128, 128, 128, 128, 128} );
+    //dualsense::setRightTrigger(TriggerProfile::Vibration, {3, 4, 14} );
+    //dualsense::setRightTrigger(TriggerProfile::AutomaticGun, {1, 7, 6} );
+    //dualsense::setRightTrigger(TriggerProfile::Feedback, {3, 3} );
+    dualsense::setRightTrigger(TriggerProfile::VibrateTriggerPulse);
+    dualsense::sendState();
+    //dualsense::terminate();
     std::cout << "is controller connected: " << dualsense::isConnected() << std::endl;
     return 0;
 #endif
@@ -190,7 +196,7 @@ int main(int argc, char** argv){
 
 #if NEW_TRIGGERS
                 outState.triggerSettingEnabled = true;
-                outState.leftTriggerSetting.profile = TriggerProfile::GameCube;
+                outState.leftTriggerSetting.profile = TriggerProfile::VibrateTrigger10Hz;
                 outState.rightTriggerSetting.profile = TriggerProfile::Medium;
 
 #else

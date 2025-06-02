@@ -85,7 +85,7 @@ enum class TriggerProfile : int8_t {
     Custom,
 };
 
-void setTriggerProfile(unsigned char *buffer, TriggerProfile profile);
+void setTriggerProfile(unsigned char *buffer, TriggerProfile profile, std::vector<uint8_t> extras = {});
 
 namespace dualsense {
 
@@ -115,18 +115,17 @@ namespace dualsense {
 
     /**
     * Sets an adaptive trigger mode to the left trigger (i.e., L2)
-    * @param triggerMode The mode to set for the adaptive trigger
+    * @param triggerProfile The mode to set for the adaptive trigger
     * @param extras (optional) Additional parameters required by the trigger
     */
-    void setLeftTrigger(TriggerMode triggerMode, std::vector<int> extras={});
+    void setLeftTrigger(TriggerProfile triggerProfile, std::vector<uint8_t> extras = {});
 
     /**
     * Sets an adaptive trigger mode to the right trigger (i.e., R2)
-    * @param   triggerMode The mode to set for the adaptive trigger
+    * @param   triggerProfile The mode to set for the adaptive trigger
     * @param   extras (optional) Additional parameters required by the trigger
     */
-    void setRightTrigger(TriggerMode triggerMode, std::vector<int> extras={});
-#if 0
+    void setRightTrigger(TriggerProfile triggerProfile, std::vector<uint8_t> extras = {});
     /**
      * Sets an custom adaptive trigger mode to the left trigger (i.e., L2)
      *
@@ -138,8 +137,8 @@ namespace dualsense {
      * @param extras   Additional parameters required by the custom trigger
      * mode
      */
-    void setLeftCustomTrigger(CustomTriggerValueMode customMode,
-                                                    std::vector<int> extras);
+    void setLeftCustomTrigger(TriggerMode customMode,
+                                        std::vector<uint8_t> extras);
     /**
      * Sets an custom adaptive trigger mode to the right trigger (i.e., R2)
      *
@@ -151,8 +150,10 @@ namespace dualsense {
      * @param extras   Additional parameters required by the custom trigger
      * mode
      */
-    void setRightCustomTrigger(CustomTriggerValueMode customMode,
-                                                    std::vector<int> extras);
+    void setRightCustomTrigger(TriggerMode customMode,
+                                        std::vector<uint8_t> extras);
+    void sendState();
+#if 0
     /**
      * Resets the controller's setting to user's defaults
      */

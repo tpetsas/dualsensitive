@@ -46,7 +46,7 @@ void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS
 }
 
 void __DS5W::Output::processTriggerSetting(DS5W::TriggerSetting *setting, unsigned char *buffer) {
-    setTriggerProfile(buffer, setting->profile);
+    setTriggerProfile(buffer, setting->profile, setting->extras);
 }
 
 void __DS5W::Output::processTrigger(DS5W::TriggerEffect* ptrEffect, unsigned char* buffer) {
