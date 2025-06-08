@@ -78,7 +78,7 @@ enum class TriggerProfile : int8_t {
     MultiplePositionVibration,
 
     Bow,
-    weapon,
+    Weapon,
     SemiAutomaticGun,
     AutomaticGun,
 

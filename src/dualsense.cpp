@@ -290,7 +290,7 @@ void setTriggerProfile(unsigned char *buffer, TriggerProfile profile, std::vecto
                 uint8_t position = extras[0];
                 uint8_t amplitude = extras[1];
                 uint8_t frequency = extras[2];
-                if (position <= 9 && amplitude <= 8 && amplitude > 0 && frequency > 0) {
+                if (position <= 9 && amplitude <= 10 && amplitude > 0 && frequency > 0) {
                     uint8_t b = (amplitude - 1) & 7;
                     uint32_t num = 0;
                     uint16_t num2 = 0;
@@ -304,8 +304,9 @@ void setTriggerProfile(unsigned char *buffer, TriggerProfile profile, std::vecto
                     buffer[4] = static_cast<uint8_t>((num >> 8) & 0xFF);
                     buffer[5] = static_cast<uint8_t>((num >> 16) & 0xFF);
                     buffer[6] = static_cast<uint8_t>((num >> 24) & 0xFF);
-                    buffer[7] = frequency;
-                    lastIdx = 7;
+                    // skip 7 and  8
+                    buffer[9] = frequency;
+                    lastIdx = 9;
                 }
             }
             break;
@@ -407,7 +408,7 @@ void setTriggerProfile(unsigned char *buffer, TriggerProfile profile, std::vecto
                 }
             }
             break;
-        case TriggerProfile::weapon:
+        case TriggerProfile::Weapon:
             {
                 uint8_t startPosition = extras[0];
                 uint8_t endPosition = extras[1];
@@ -537,6 +538,9 @@ namespace dualsense {
     }
     
     void terminate(void) {
+        setLeftTrigger(TriggerProfile::Normal);
+        setRightTrigger(TriggerProfile::Normal);
+        sendState();
         DS5W::freeDeviceContext(&controller);
     }
     
