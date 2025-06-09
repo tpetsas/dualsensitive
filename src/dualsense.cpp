@@ -48,7 +48,6 @@ int scanControllers(std::vector<DS5W::DeviceEnumInfo>& infosVector) {
 
 	if (controllersCount == 0) {
 		ERROR_PRINT("No DualSense controllers found!");
-		system("pause");
 		return -1;
 	}
 
