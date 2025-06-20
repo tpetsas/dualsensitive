@@ -34,11 +34,18 @@ else()
     target_compile_options(dualsense PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
-add_executable(dualsense-test test/main.cpp)
+# solo test exe
+add_executable(solo-test test/solo/main.cpp)
+target_include_directories(solo-test PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(solo-test PRIVATE dualsense)
 
-target_include_directories(dualsense-test PRIVATE
-    ${PROJECT_SOURCE_DIR}/include
-)
+# server executable (runs the UDP server)
+add_executable(server test/server/main.cpp)
+target_link_libraries(server PRIVATE dualsense)
+target_include_directories(server PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
-target_link_libraries(dualsense-test PRIVATE dualsense)
+# client executable (launches server and sends triggers)
+add_executable(client test/client/main.cpp)
+target_link_libraries(client PRIVATE dualsense)
+target_include_directories(client PRIVATE ${PROJECT_SOURCE_DIR}/include)
 

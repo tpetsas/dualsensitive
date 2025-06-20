@@ -10,6 +10,7 @@
 
 #include <log.h>
 #include <dualsense.h>
+#include <udp.h>
 
 #include <Windows.h>
 
@@ -23,9 +24,46 @@
 
 #define DEVICE_ENUM_INFO_SZ 16
 #define CONTROLLER_LIMIT 16
-
+#define TRIGGER_INDEX 0
+#define PROFILE_INDEX 1
+#define EXTRAS_SIZE_INDEX 2
+#define MIN_PAYLOAD_SIZE 3
+#define EXTRAS_BUFFER_INDEX 3
 
 // utils
+
+enum class Trigger : uint8_t {
+    Left = 0,
+    Right = 1
+};
+
+std::vector<uint8_t> serializeTriggerPayload(Trigger trigger, TriggerProfile profile, const std::vector<uint8_t>& extras) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(static_cast<uint8_t>(trigger));            // 1 byte: trigger
+    buffer.push_back(static_cast<int8_t>(profile));             // 1 byte: profile
+    buffer.push_back(static_cast<uint8_t>(extras.size()));      // 1 byte: extras length
+    buffer.insert(buffer.end(), extras.begin(), extras.end());  // extras
+    return buffer;
+}
+
+
+bool deserializeTriggerPayload(const std::vector<uint8_t>& buffer, Trigger& trigger, TriggerProfile& profile, std::vector<uint8_t>& extras) {
+    if (buffer.size() < MIN_PAYLOAD_SIZE) {
+        ERROR_PRINT("buffer size less than expected!");
+        return false;
+    }
+    trigger = static_cast<Trigger>(buffer[TRIGGER_INDEX]);
+    profile = static_cast<TriggerProfile>(static_cast<int8_t>(buffer[PROFILE_INDEX]));
+    uint8_t extrasSize = buffer[EXTRAS_SIZE_INDEX];
+
+    if (buffer.size() < EXTRAS_BUFFER_INDEX + extrasSize) {
+        ERROR_PRINT("extras found corrupted!");
+        return false;
+    }
+
+    extras.assign(buffer.begin() + EXTRAS_BUFFER_INDEX, buffer.begin() + EXTRAS_BUFFER_INDEX + extrasSize);
+    return true;
+}
 
 std::string wstring_to_utf8(const std::wstring& ws) {
     int len = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), -1,
@@ -501,24 +539,98 @@ std::vector<T> prepend(const T& first, const std::vector<T>& rest) {
 
 namespace dualsense {
 
-    // support a single controller for now
+    // These control the active mode
+    static AgentMode agentMode = AgentMode::SOLO;
+    static uint16_t udpPort = 28472;
+    
+    // support a single controller for now (on SOLO and SERVER modes only)
 	DS5W::DeviceContext controller;
     // structure to keep the state to send out to controller
+    // (on SOLO and CLIENT modes only)
 	DS5W::DS5OutputState outState;
 
     bool isConnected(void) {
+        if (agentMode == AgentMode::CLIENT) {
+            ERROR_PRINT("Not applicable in CLIENT mode");
+            return false;
+        }
 	    DS5W::DS5InputState inState;
         return DS5W_SUCCESS(DS5W::getDeviceInputState(&controller, &inState));
     }
 
     void ensureConnected(void) {
+        if (agentMode == AgentMode::CLIENT) {
+            ERROR_PRINT("Not applicable in CLIENT mode");
+            return;
+        }
         if (!isConnected()) {
             ERROR_PRINT("Device disconnected! Try to reconnect");
             DS5W::reconnectDevice(&controller);
         }
     }
 
-    Status init(void) {
+    bool assignTriggersFromPayload(const std::vector<uint8_t> payload) {
+        Trigger trigger;
+        TriggerProfile profile;
+        std::vector<uint8_t> extras;
+
+        if (!deserializeTriggerPayload(payload, trigger, profile, extras)) {
+            ERROR_PRINT("failed to deserialize payload!");
+            return false;
+        }
+        outState.triggerSettingEnabled = true;
+        switch (trigger) {
+            case Trigger::Left:
+                //setLeftTrigger(profile, extras);
+                outState.leftTriggerSetting.profile = profile;
+                outState.leftTriggerSetting.extras = extras;
+                break;
+            case Trigger::Right:
+                //setRightTrigger(profile, extras);
+                outState.rightTriggerSetting.profile = profile;
+                outState.rightTriggerSetting.extras = extras;
+                break;
+            default:
+                ERROR_PRINT("Unknown trigger type!");
+                return false;
+        };
+        return true;
+    }
+
+    Status init(AgentMode mode, uint16_t port) {
+        agentMode = mode;
+
+        switch (mode) {
+            case AgentMode::CLIENT:
+                udpPort = port;
+                if (udp::startClient(udpPort) != udp::Status::Success)
+                    return Status::InitFailed;
+                return Status::Ok;
+                break;
+            case AgentMode::SERVER: {
+                udpPort = port;
+                auto callback = [](const std::vector<uint8_t>& payload) {
+                    if (payload.size() < MIN_PAYLOAD_SIZE) {
+                        ERROR_PRINT("Payload size less than expected!");
+                        return;
+                    }
+                    if(!assignTriggersFromPayload(payload)) {
+                        ERROR_PRINT("Could not set triggers from payload!");
+                        return;
+                    }
+                    sendState();
+                };
+
+                if (udp::startServer(udpPort, callback) != udp::Status::Success)
+                    return Status::InitFailed;
+                break;
+            }
+            case AgentMode::SOLO:
+            default:
+                ;
+        }
+
+        // only on SERVER and SOLO mode
         std::vector<DS5W::DeviceEnumInfo> controllersInfo;
         if (scanControllers(controllersInfo) != 0) {
             return Status::NoControllersDetected;
@@ -537,39 +649,94 @@ namespace dualsense {
     }
     
     void terminate(void) {
+
         setLeftTrigger(TriggerProfile::Normal);
         setRightTrigger(TriggerProfile::Normal);
-        sendState();
+
+        switch (agentMode) {
+            case AgentMode::CLIENT:
+                udp::stopClient();
+                return;
+            case AgentMode::SERVER:
+                udp::stopServer();
+                break;
+            case AgentMode::SOLO:
+                sendState();
+            default:
+                ;
+        }
+
+        // only on SERVER and SOLO mode
+
         DS5W::freeDeviceContext(&controller);
     }
-    
+   
+    void setTrigger(Trigger trigger, TriggerProfile triggerProfile,
+                                                std::vector<uint8_t> extras){
+        switch (agentMode) {
+            case AgentMode::CLIENT: {
+                std::vector<uint8_t> payload = serializeTriggerPayload(
+                        trigger,
+                        triggerProfile,
+                        extras
+                );
+                udp::send(payload);
+                break;
+            }
+            case AgentMode::SERVER:
+                //ERROR_PRINT("Not applicable in SERVER mode");
+                //break;
+            case AgentMode::SOLO:
+            default:
+                outState.triggerSettingEnabled = true;
+                if (trigger == Trigger::Left) {
+                    outState.leftTriggerSetting.profile = triggerProfile;
+                    outState.leftTriggerSetting.extras = extras;
+                } else if (trigger == Trigger::Right) {
+                    outState.rightTriggerSetting.profile = triggerProfile;
+                    outState.rightTriggerSetting.extras = extras;
+                } else {
+                    ERROR_PRINT("Unknown trigger type!");
+                    break;
+                }
+                sendState();
+        }
+    }
+
     void setLeftTrigger(TriggerProfile triggerProfile, std::vector<uint8_t> extras) {
-        outState.triggerSettingEnabled = true;
-        outState.leftTriggerSetting.profile = triggerProfile;
-        outState.leftTriggerSetting.extras = extras;
+       setTrigger(Trigger::Left, triggerProfile, extras);
     }
 
     void setRightTrigger(TriggerProfile triggerProfile, std::vector<uint8_t> extras) {
-        outState.triggerSettingEnabled = true;
-        outState.rightTriggerSetting.profile = triggerProfile;
-        outState.rightTriggerSetting.extras = extras;
+       setTrigger(Trigger::Right, triggerProfile, extras);
     }
 
     void setLeftCustomTrigger(TriggerMode customMode,
                                         std::vector<uint8_t> extras) {
-        outState.triggerSettingEnabled = true;
-        outState.leftTriggerSetting.profile = TriggerProfile::Custom;
-        std::vector<uint8_t> combined = prepend(static_cast<uint8_t>(customMode), extras);
-        outState.leftTriggerSetting.extras = combined;
+        TriggerProfile profile = TriggerProfile::Custom;
+        std::vector<uint8_t> extendedExtras = prepend (
+                static_cast<uint8_t>(customMode),
+                extras
+        );
+        setTrigger(Trigger::Left, profile, extendedExtras);
     }
+
     void setRightCustomTrigger(TriggerMode customMode,
                                         std::vector<uint8_t> extras) {
-        outState.triggerSettingEnabled = true;
-        outState.rightTriggerSetting.profile = TriggerProfile::Custom;
-        std::vector<uint8_t> combined = prepend(static_cast<uint8_t>(customMode), extras);
-        outState.rightTriggerSetting.extras = combined;
+        TriggerProfile profile = TriggerProfile::Custom;
+        std::vector<uint8_t> extendedExtras = prepend( 
+                static_cast<uint8_t>(customMode),
+                extras
+        );
+        setTrigger(Trigger::Right, profile, extendedExtras);
     }
+
     void sendState() {
+        if (agentMode == AgentMode::CLIENT) {
+            ERROR_PRINT("Not applicable in CLIENT mode");
+            return;
+        }
+        ensureConnected();
 	    DS5W::setDeviceOutputState(&controller, &outState);
     }
 }

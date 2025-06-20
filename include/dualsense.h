@@ -13,6 +13,21 @@
 
 #include <cstdint>
 #include <vector>
+#include <string>
+#include <vector>
+#include <functional>
+
+/**
+ * Defines the operating mode of the DualSense library.
+ * - SOLO: Directly accesses and controls the DualSense controller.
+ * - SERVER: Listens for UDP trigger effect commands and applies them.
+ * - CLIENT: Sends trigger commands to a background server process.
+ */
+enum class AgentMode {
+    SOLO,
+    SERVER,
+    CLIENT
+};
 
 
 enum class TriggerMode : uint8_t {
@@ -87,6 +102,10 @@ enum class TriggerProfile : int8_t {
 
 void setTriggerProfile(unsigned char *buffer, TriggerProfile profile, std::vector<uint8_t> extras = {});
 
+
+/**
+ * DualSense controller interface supporting multiple runtime modes.
+ */
 namespace dualsense {
 
     enum class Status {
@@ -100,11 +119,13 @@ namespace dualsense {
     void ensureConnected(void);
 
     /**
-     * Initializes the dualsense module for sending feature settings
+     * Initializes the DualSense interface in the specified mode.
+     * @param mode        SOLO, SERVER, or CLIENT.
+     * @param port        UDP port used by SERVER/CLIENT mode (default: 28472).
      * @return 0 if the module was successfully initialized,
      *         or an error code otherwise (see enum class ErrorCode)
      */
-    Status init(void);
+    Status init(AgentMode mode = AgentMode::SOLO, uint16_t port = 28472);
 
     /**
      * Initializes the dualsense module
