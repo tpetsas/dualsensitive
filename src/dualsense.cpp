@@ -15,6 +15,7 @@
 #include <Windows.h>
 
 #include <string>
+#include <mutex>
 #include <sstream>
 #include <IO.h>
 #include <Device.h>
@@ -542,6 +543,9 @@ namespace dualsense {
     // These control the active mode
     static AgentMode agentMode = AgentMode::SOLO;
     static uint16_t udpPort = 28472;
+    static std::mutex initMutex;
+    // consider guarding hasInit using a mutex
+    static bool hasInit = false;
 
     // support a single controller for now (on SOLO and SERVER modes only)
 	DS5W::DeviceContext controller;
@@ -558,15 +562,41 @@ namespace dualsense {
         return DS5W_SUCCESS(DS5W::getDeviceInputState(&controller, &inState));
     }
 
+    // XXX This should be called in a block where the initMutex lock has been acquired
+    Status connectToController() {
+        std::vector<DS5W::DeviceEnumInfo> controllersInfo;
+        if (scanControllers(controllersInfo) != 0) {
+            return Status::NoControllersDetected;
+        }
+        // set the first dualsense found as our main controller
+	    if (!DS5W_SUCCESS (
+            DS5W::initDeviceContext(&controllersInfo[0], &controller) )) {
+                ERROR_PRINT("Init failed");
+                return Status::InitFailed;
+        }
+        DEBUG_PRINT("DualSense controller connnected");
+        hasInit = true;
+		ZeroMemory(&outState, sizeof(DS5W::DS5OutputState));
+        return Status::Ok;
+    }
+
     void ensureConnected(void) {
         if (agentMode == AgentMode::CLIENT) {
             ERROR_PRINT("Not applicable in CLIENT mode");
             return;
         }
-        if (!isConnected()) {
+
+        if (isConnected())
+            return;
+
+        std::lock_guard<std::mutex> lock(initMutex);
+        if (hasInit) {
+            // try to reconnect to the same controller
             ERROR_PRINT("Device disconnected! Try to reconnect");
             DS5W::reconnectDevice(&controller);
+            return;
         }
+        connectToController();
     }
 
     bool assignTriggersFromPayload(const std::vector<uint8_t> payload) {
@@ -615,8 +645,8 @@ namespace dualsense {
                 udpPort = port;
                 if (udp::startClient(udpPort) != udp::Status::Success)
                     return Status::InitFailed;
+                hasInit = true;
                 return Status::Ok;
-                break;
             case AgentMode::SERVER: {
                 udpPort = port;
                 auto callback = [](const std::vector<uint8_t>& payload) {
@@ -641,21 +671,12 @@ namespace dualsense {
         }
 
         // only on SERVER and SOLO mode
-        std::vector<DS5W::DeviceEnumInfo> controllersInfo;
-        if (scanControllers(controllersInfo) != 0) {
-            return Status::NoControllersDetected;
-        }
-        // set the first dualsense found as our main controller
-	    if (DS5W_SUCCESS (
-            DS5W::initDeviceContext(&controllersInfo[0], &controller) )) {
-            DEBUG_PRINT("DualSense controller connnected");
+        std::lock_guard<std::mutex> lock(initMutex);
+        if (hasInit) {
+            INFO_PRINT("DualSense controller already connnected");
             return Status::Ok;
         }
-		ZeroMemory(&outState, sizeof(DS5W::DS5OutputState));
-        // make sure to enable the new trigger structure
-        outState.triggerSettingEnabled = true;
-        ERROR_PRINT("Init failed");
-        return Status::InitFailed;
+        return connectToController();
     }
 
     void terminate(void) {
