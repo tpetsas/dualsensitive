@@ -1,5 +1,5 @@
 #include "DS5_Output.h"
-#include "log.h"
+#include "logger.h"
 
 void __DS5W::Output::createHidOutputBuffer(unsigned char* hidOutBuffer, DS5W::DS5OutputState* ptrOutputState) {
 	// Feature mask

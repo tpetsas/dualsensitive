@@ -7,7 +7,7 @@
 int main() {
     std::cout << "Starting DualSense UDP server...\n";
 
-    auto status = dualsense::init(AgentMode::SERVER, 9999);
+    auto status = dualsense::init(AgentMode::SERVER);
     if (status != dualsense::Status::Ok) {
         std::cerr << "Failed to initialize DualSense in SERVER mode\n";
         return 1;

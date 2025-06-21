@@ -8,7 +8,7 @@
     Licensed under the MIT License
 */
 
-#include <log.h>
+#include <logger.h>
 #include <dualsense.h>
 #include <udp.h>
 
@@ -80,7 +80,7 @@ int scanControllers(std::vector<DS5W::DeviceEnumInfo>& infosVector) {
 	// list all DualSense controllers
 	DS5W::DeviceEnumInfo infos[CONTROLLER_LIMIT];
 	unsigned int controllersCount = 0;
-	DS5W_ReturnValue rv = DS5W::enumDevices (
+	DS5W::enumDevices (
         infos, DEVICE_ENUM_INFO_SZ, &controllersCount
     );
 
@@ -542,7 +542,7 @@ namespace dualsense {
     // These control the active mode
     static AgentMode agentMode = AgentMode::SOLO;
     static uint16_t udpPort = 28472;
-    
+
     // support a single controller for now (on SOLO and SERVER modes only)
 	DS5W::DeviceContext controller;
     // structure to keep the state to send out to controller
@@ -597,8 +597,18 @@ namespace dualsense {
         return true;
     }
 
-    Status init(AgentMode mode, uint16_t port) {
+    Status init(AgentMode mode, const std::string& logPath, bool enableDebug,
+            uint16_t port) {
         agentMode = mode;
+
+        // true will enable debug output
+        // TODO: add a bool parameter so we can tweak that as we want
+        Logger::init(enableDebug);
+        if (!Logger::setLogFile(logPath)) {
+            ERROR_PRINT("Failed to set log file. Falling back to stdout.");
+        } else {
+            INFO_PRINT("set log file: " << logPath);
+        }
 
         switch (mode) {
             case AgentMode::CLIENT:
@@ -647,7 +657,7 @@ namespace dualsense {
         ERROR_PRINT("Init failed");
         return Status::InitFailed;
     }
-    
+
     void terminate(void) {
 
         setLeftTrigger(TriggerProfile::Normal);
@@ -670,7 +680,7 @@ namespace dualsense {
 
         DS5W::freeDeviceContext(&controller);
     }
-   
+
     void setTrigger(Trigger trigger, TriggerProfile triggerProfile,
                                                 std::vector<uint8_t> extras){
         switch (agentMode) {
@@ -724,7 +734,7 @@ namespace dualsense {
     void setRightCustomTrigger(TriggerMode customMode,
                                         std::vector<uint8_t> extras) {
         TriggerProfile profile = TriggerProfile::Custom;
-        std::vector<uint8_t> extendedExtras = prepend( 
+        std::vector<uint8_t> extendedExtras = prepend (
                 static_cast<uint8_t>(customMode),
                 extras
         );

@@ -53,7 +53,7 @@ int main() {
 
     std::vector<uint8_t> payload;
 
-    auto status = dualsense::init(AgentMode::CLIENT, 9999);
+    auto status = dualsense::init(AgentMode::CLIENT);
     if (status != dualsense::Status::Ok) {
         std::cout << "Failed to initialize DualSense in CLIENT mode, status: " << static_cast<std::underlying_type<dualsense::Status>::type>(status) << std::endl;
         return 1;

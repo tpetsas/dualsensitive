@@ -121,11 +121,15 @@ namespace dualsense {
     /**
      * Initializes the DualSense interface in the specified mode.
      * @param mode        SOLO, SERVER, or CLIENT.
+     * @param logPath     the path to the file that will keep the dualsense logs
+     * @param enableDebug enable debug logging
      * @param port        UDP port used by SERVER/CLIENT mode (default: 28472).
      * @return 0 if the module was successfully initialized,
      *         or an error code otherwise (see enum class ErrorCode)
      */
-    Status init(AgentMode mode = AgentMode::SOLO, uint16_t port = 28472);
+    Status init(AgentMode mode = AgentMode::SOLO,
+                    const std::string& logPath = "dualsense-cpp.log",
+                    bool enableDebug = true, uint16_t port = 28472);
 
     /**
      * Initializes the dualsense module
