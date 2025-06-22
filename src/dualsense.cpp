@@ -31,6 +31,10 @@
 #define MIN_PAYLOAD_SIZE 3
 #define EXTRAS_BUFFER_INDEX 3
 
+// for the retry logic used for connecting to the controller
+#define MAX_RETRIES 5
+#define RETRY_DELAY_MS 500
+
 // utils
 
 enum class Trigger : uint8_t {
@@ -565,19 +569,30 @@ namespace dualsense {
     // XXX This should be called in a block where the initMutex lock has been acquired
     Status connectToController() {
         std::vector<DS5W::DeviceEnumInfo> controllersInfo;
-        if (scanControllers(controllersInfo) != 0) {
-            return Status::NoControllersDetected;
-        }
-        // set the first dualsense found as our main controller
-	    if (!DS5W_SUCCESS (
-            DS5W::initDeviceContext(&controllersInfo[0], &controller) )) {
+
+        Status status;
+        for (int attempt = 0; attempt < MAX_RETRIES; ++attempt) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_DELAY_MS));
+            DEBUG_PRINT("Device disconnected! Attempt " << (attempt+1) << " to reconnect...");
+
+            if (scanControllers(controllersInfo) != 0) {
+                status = Status::NoControllersDetected;
+                continue;
+            }
+            // set the first dualsense found as our main controller
+            if (!DS5W_SUCCESS (
+                DS5W::initDeviceContext(&controllersInfo[0], &controller) )) {
                 ERROR_PRINT("Init failed");
-                return Status::InitFailed;
+                status = Status::InitFailed;
+                continue;
+            }
+            status = Status::Ok;
+            DEBUG_PRINT("DualSense controller connnected");
+            hasInit = true;
+            ZeroMemory(&outState, sizeof(DS5W::DS5OutputState));
+            break;
         }
-        DEBUG_PRINT("DualSense controller connnected");
-        hasInit = true;
-		ZeroMemory(&outState, sizeof(DS5W::DS5OutputState));
-        return Status::Ok;
+        return status;
     }
 
     void ensureConnected(void) {
@@ -593,8 +608,8 @@ namespace dualsense {
         if (hasInit) {
             // try to reconnect to the same controller
             ERROR_PRINT("Device disconnected! Try to reconnect");
-            DS5W::reconnectDevice(&controller);
-            return;
+            if (DS5W::reconnectDevice(&controller) == DS5W_OK)
+                return;
         }
         connectToController();
     }
