@@ -40,9 +40,13 @@ target_include_directories(solo-test PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(solo-test PRIVATE dualsense)
 
 # server executable (runs the UDP server)
-add_executable(server test/server/main.cpp)
-target_link_libraries(server PRIVATE dualsense)
-target_include_directories(server PRIVATE ${PROJECT_SOURCE_DIR}/include)
+add_executable(dualsense-service test/server/main.cpp)
+# Mark as Windows GUI app to suppress console window
+set_target_properties(dualsense-service PROPERTIES
+    WIN32_EXECUTABLE TRUE
+)
+target_link_libraries(dualsense-service PRIVATE dualsense)
+target_include_directories(dualsense-service PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 # client executable (launches server and sends triggers)
 add_executable(client test/client/main.cpp)

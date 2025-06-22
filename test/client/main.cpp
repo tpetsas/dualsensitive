@@ -4,7 +4,28 @@
 #include <windows.h>
 #include <iostream>
 
-bool launchServer(PROCESS_INFORMATION& outProcInfo, const std::wstring& exePath = L"./server.exe") {
+
+bool launchServerElevated(const std::wstring& exePath = L"./dualsense-service.exe") {
+    wchar_t fullExePath[MAX_PATH];
+    if (!GetFullPathNameW(exePath.c_str(), MAX_PATH, fullExePath, nullptr)) {
+        return false;
+    }
+
+    SHELLEXECUTEINFOW sei = { sizeof(sei) };
+    sei.lpVerb = L"runas";
+    sei.lpFile = fullExePath;
+    sei.nShow = SW_HIDE;
+    sei.fMask = SEE_MASK_NO_CONSOLE;
+
+    if (!ShellExecuteExW(&sei)) {
+        DWORD err = GetLastError();
+        return false;
+    }
+
+    return true;
+}
+
+bool launchServer(PROCESS_INFORMATION& outProcInfo, const std::wstring& exePath = L"./dualsense-service.exe") {
     STARTUPINFOW si = { sizeof(si) };
     ZeroMemory(&outProcInfo, sizeof(outProcInfo));
 
@@ -45,7 +66,8 @@ bool terminateServer(PROCESS_INFORMATION& procInfo) {
 int main() {
     PROCESS_INFORMATION serverProcInfo;
     std::cout << "Client starting server process...\n";
-    if (!launchServer(serverProcInfo)) {
+    //if (!launchServer(serverProcInfo)) {
+    if (!launchServerElevated()) {
         return 1;
     }
 
