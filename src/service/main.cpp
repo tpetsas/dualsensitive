@@ -31,8 +31,17 @@ void updateTrayIcon() {
 }
 
 void updateMenuState() {
-    CheckMenuItem(g_hMenu, ID_TRAY_ENABLE, MF_BYCOMMAND | (dualsensitive::isEnabled() ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(g_hMenu, ID_TRAY_DISABLE, MF_BYCOMMAND | (!dualsensitive::isEnabled() ? MF_CHECKED : MF_UNCHECKED));
+	 if (dualsensitive::isEnabled()) {
+        EnableMenuItem(g_hMenu, ID_TRAY_ENABLE, MF_BYCOMMAND | MF_GRAYED);
+        EnableMenuItem(g_hMenu, ID_TRAY_DISABLE, MF_BYCOMMAND | MF_ENABLED);
+        CheckMenuItem(g_hMenu, ID_TRAY_ENABLE, MF_BYCOMMAND | MF_CHECKED);
+        CheckMenuItem(g_hMenu, ID_TRAY_DISABLE, MF_BYCOMMAND | MF_UNCHECKED);
+    } else {
+        EnableMenuItem(g_hMenu, ID_TRAY_ENABLE, MF_BYCOMMAND | MF_ENABLED);
+        EnableMenuItem(g_hMenu, ID_TRAY_DISABLE, MF_BYCOMMAND | MF_GRAYED);
+        CheckMenuItem(g_hMenu, ID_TRAY_ENABLE, MF_BYCOMMAND | MF_UNCHECKED);
+        CheckMenuItem(g_hMenu, ID_TRAY_DISABLE, MF_BYCOMMAND | MF_CHECKED);
+    }
 }
 
 void showContextMenu() {
