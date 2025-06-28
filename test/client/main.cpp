@@ -96,6 +96,46 @@ int main() {
     dualsensitive::setRightTrigger(TriggerProfile::Normal);
     Sleep(4000);
 
+    std::cout << "mode changed to SMG" << std::endl;
+    dualsensitive::setLeftCustomTrigger(TriggerMode::Rigid_A, {71, 96, 128, 128, 128, 128, 128} );
+    dualsensitive::setRightTrigger(TriggerProfile::Vibration, {3, 4, 14} );
+    Sleep(4000);
+
+    std::cout << "mode changed to railgun" << std::endl;
+    dualsensitive::setLeftTrigger(TriggerProfile::Machine, {1, 8, 3, 3, 184, 0} );
+    dualsensitive::setRightCustomTrigger(TriggerMode::Pulse_B, {238, 215, 66, 120, 43, 160, 215});
+    Sleep(4000);
+
+    std::cout << "mode changed to rocket launcher (triple-shot)" << std::endl;
+    dualsensitive::setLeftCustomTrigger(TriggerMode::Rigid, {} );
+    dualsensitive::setRightCustomTrigger(TriggerMode::Rigid_A, {209, 42, 232, 192, 232, 209, 232} );
+    Sleep(4000);
+
+    std::cout << "mode changed to sticky launcher" << std::endl;
+    dualsensitive::setLeftTrigger(TriggerProfile::Feedback, {3, 3} );
+    dualsensitive::setRightTrigger(TriggerProfile::VeryHard, {} );
+    Sleep(4000);
+
+    std::cout << "mode changed to pistol (with silencer)" << std::endl;
+    dualsensitive::setLeftTrigger(TriggerProfile::Choppy);
+    dualsensitive::setRightTrigger(TriggerProfile::Weapon, {2, 5, 5});
+    Sleep(4000);
+
+    std::cout << "mode changed to pistol" << std::endl;
+    dualsensitive::setLeftTrigger(TriggerProfile::Choppy);
+    dualsensitive::setRightTrigger(TriggerProfile::MultiplePositionFeeback, {4, 7, 0, 2, 4, 6, 0, 3, 6, 0});
+    Sleep(4000);
+
+    std::cout << "mode changed to magnum" << std::endl;
+    dualsensitive::setLeftTrigger(TriggerProfile::Choppy);
+    dualsensitive::setRightTrigger(TriggerProfile::SlopeFeedback, {0, 8, 8, 1});
+    Sleep(4000);
+
+    std::cout << "mode changed to Medium Machine Gun" << std::endl;
+    dualsensitive::setLeftTrigger(TriggerProfile::Vibration, {1, 10, 8});
+    dualsensitive::setRightTrigger(TriggerProfile::MultiplePositionVibration, {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8});
+    Sleep(4000);
+
     // Clean up
     if (terminateServer(serverProcInfo)) {
         std::cout << "DualSensitive Service terminated successfully.\n";

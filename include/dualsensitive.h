@@ -177,13 +177,30 @@ namespace dualsensitive {
      */
     void setRightCustomTrigger(TriggerMode customMode,
                                         std::vector<uint8_t> extras);
-    void sendState();
-#if 0
+    void sendState(void);
+
     /**
-     * Resets the controller's setting to user's defaults
+     * Disables dualsensitive operations. When dualsensitive is disabled,
+     * no settings or profiles will be sent to controller
      */
-     void reset(void);
-#endif
+    void disable(void);
+
+    /**
+     * Enables dualsensitive operations. When dualsensitive is disabled,
+     * no settings or profiles will be sent to controller
+     */
+    void enable(void);
+
+    /**
+     * Returns if dualsensitive operations are enabled
+     */
+    bool isEnabled(void);
+
+    /**
+     * Resets the controller's setting to the default state
+     */
+    void reset(void);
+
     // Other DualSense features
     // XXX The following are not supported yet
 #if 0

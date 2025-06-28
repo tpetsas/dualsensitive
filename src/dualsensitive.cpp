@@ -548,8 +548,11 @@ namespace dualsensitive {
     static AgentMode agentMode = AgentMode::SOLO;
     static uint16_t udpPort = 28472;
     static std::mutex initMutex;
-    // consider guarding hasInit using a mutex
     static bool hasInit = false;
+    // only if enabled is true, the DualSense settings will be sent to
+    // controller
+    static std::mutex enabledMutex;
+    static bool enabled = true;
 
     // support a single controller for now (on SOLO and SERVER modes only)
 	DS5W::DeviceContext controller;
@@ -777,12 +780,39 @@ namespace dualsensitive {
         setTrigger(Trigger::Right, profile, extendedExtras);
     }
 
-    void sendState() {
+    void sendState(void) {
+        {
+            std::lock_guard<std::mutex> lock(enabledMutex);
+            if (!enabled) {
+                DEBUG_PRINT("DualSensitive is disabled... Don't send any state");
+                return;
+            }
+        }
         if (agentMode == AgentMode::CLIENT) {
             ERROR_PRINT("Not applicable in CLIENT mode");
             return;
         }
         ensureConnected();
 	    DS5W::setDeviceOutputState(&controller, &outState);
+    }
+
+    void disable(void) {
+        std::lock_guard<std::mutex> lock(enabledMutex);
+        enabled = false;
+    }
+
+    void enable(void) {
+        std::lock_guard<std::mutex> lock(enabledMutex);
+        enabled = true;
+    }
+
+    bool isEnabled(void) {
+        std::lock_guard<std::mutex> lock(enabledMutex);
+        return enabled;
+    }
+
+    void reset(void) {
+        dualsensitive::setLeftTrigger(TriggerProfile::Normal);
+        dualsensitive::setRightTrigger(TriggerProfile::Normal);
     }
 }
