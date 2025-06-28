@@ -1,6 +1,15 @@
+/*
+    udp.cpp is part of DualSensitive
+    https://github.com/tpetsas/dualsensitive
 
-// udp.cpp
-// Handles UDP-based communication between DualSense client and server modes.
+    Contributors of this file:
+    05.2025 Thanasis Petsas
+
+    Licensed under the MIT License
+*/
+
+
+// Handles UDP-based communication between DualSensitive client and server modes.
 // This module provides functionality for:
 // - Spinning up a UDP server to receive trigger requests
 // - Sending UDP packets to a remote server (client mode)

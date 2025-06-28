@@ -1,6 +1,6 @@
 /*
-    dualsense.h is part of dualsense-cpp
-    https://github.com/tpetsas/dualsense-cpp
+    dualsensitive.h is part of DualSensitive
+    https://github.com/tpetsas/dualsensitive
 
     Contributors of this file:
     05.2025 Thanasis Petsas
@@ -9,7 +9,7 @@
 */
 
 #include <logger.h>
-#include <dualsense.h>
+#include <dualsensitive.h>
 #include <udp.h>
 
 #include <Windows.h>
@@ -542,7 +542,7 @@ std::vector<T> prepend(const T& first, const std::vector<T>& rest) {
 }
 
 
-namespace dualsense {
+namespace dualsensitive {
 
     // These control the active mode
     static AgentMode agentMode = AgentMode::SOLO;
@@ -579,7 +579,7 @@ namespace dualsense {
                 status = Status::NoControllersDetected;
                 continue;
             }
-            // set the first dualsense found as our main controller
+            // set the first DualSense controller found as our main controller
             if (!DS5W_SUCCESS (
                 DS5W::initDeviceContext(&controllersInfo[0], &controller) )) {
                 ERROR_PRINT("Init failed");

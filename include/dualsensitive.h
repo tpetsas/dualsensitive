@@ -1,6 +1,6 @@
 /*
-    dualsense.h is part of dualsense-cpp
-    https://github.com/tpetsas/dualsense-cpp
+    dualsensitive.h is part of DualSensitive
+    https://github.com/tpetsas/dualsensitive
 
     Contributors of this file:
     05.2025 Thanasis Petsas
@@ -18,7 +18,7 @@
 #include <functional>
 
 /**
- * Defines the operating mode of the DualSense library.
+ * Defines the operating mode of the DualSensitive library.
  * - SOLO: Directly accesses and controls the DualSense controller.
  * - SERVER: Listens for UDP trigger effect commands and applies them.
  * - CLIENT: Sends trigger commands to a background server process.
@@ -104,9 +104,9 @@ void setTriggerProfile(unsigned char *buffer, TriggerProfile profile, std::vecto
 
 
 /**
- * DualSense controller interface supporting multiple runtime modes.
+ * DualSensitive interface supporting multiple runtime modes.
  */
-namespace dualsense {
+namespace dualsensitive {
 
     enum class Status {
         Ok = 0, 
@@ -119,20 +119,20 @@ namespace dualsense {
     void ensureConnected(void);
 
     /**
-     * Initializes the DualSense interface in the specified mode.
+     * Initializes the DualSensitive interface in the specified mode.
      * @param mode        SOLO, SERVER, or CLIENT.
-     * @param logPath     the path to the file that will keep the dualsense logs
+     * @param logPath     the path to the file that will keep the dualsensitive logs
      * @param enableDebug enable debug logging
      * @param port        UDP port used by SERVER/CLIENT mode (default: 28472).
      * @return 0 if the module was successfully initialized,
      *         or an error code otherwise (see enum class ErrorCode)
      */
     Status init(AgentMode mode = AgentMode::SOLO,
-                    const std::string& logPath = "dualsense-cpp.log",
+                    const std::string& logPath = "dualsensitive.log",
                     bool enableDebug = true, uint16_t port = 28472);
 
     /**
-     * Initializes the dualsense module
+     * Initializes the dualsensitive module
      * @return 0 if the module was successfully terminated,
      *         or an error code otherwise (see enum class ErrorCode)
      */

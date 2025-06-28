@@ -1,7 +1,7 @@
 
 #define UNICODE
 #define _UNICODE
-#include <dualsense.h>
+#include <dualsensitive.h>
 #include <windows.h>
 #include <shellapi.h>
 #include <thread>
@@ -37,7 +37,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 // Entry point
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     // Register window class
-    const wchar_t CLASS_NAME[] = L"DualSenseUDPService";
+    const wchar_t CLASS_NAME[] = L"DualSensitive";
     WNDCLASS wc = {};
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hInstance;
@@ -45,7 +45,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     RegisterClass(&wc);
 
     hwnd = CreateWindowEx(
-        0, CLASS_NAME, L"DualSense Server", 0,
+        0, CLASS_NAME, L"DualSensitive", 0,
         0, 0, 0, 0, HWND_MESSAGE, nullptr, hInstance, nullptr
     );
 
@@ -59,11 +59,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     wcscpy_s(nid.szTip, L"Dualsensitive Service");
     Shell_NotifyIconW(NIM_ADD, &nid);
 
-    // Start DualSense UDP server
+    // Start DualSensitive UDP server
     std::thread([]() {
         OutputDebugStringW(L"Starting Dualsensitive Service...\n");
-        auto status = dualsense::init(AgentMode::SERVER);
-        if (status != dualsense::Status::Ok) {
+        auto status = dualsensitive::init(AgentMode::SERVER);
+        if (status != dualsensitive::Status::Ok) {
             OutputDebugStringW(L"Failed to initialize Dualsensitive in SERVER mode\n");
         }
     }).detach();
@@ -75,6 +75,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         DispatchMessage(&msg);
     }
 
-    dualsense::terminate();
+    dualsensitive::terminate();
     return 0;
 }

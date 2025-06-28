@@ -1,6 +1,6 @@
 <img src="https://github.com/user-attachments/assets/989911d5-23e6-403f-b346-4b589d48f186" alt="dualsense-cpp-logo" width="400"/>
 
-# Dualsense++
+# DualSensitive
 Windows C++ API for controlling the PS5 DualSense controller
 
 Built with the tools and technologies:
@@ -21,6 +21,11 @@ those or serve as a base for mods, game integrations, or tooling.
 [DualSense-github]: https://github.com/Ohjurot/DualSense-Windows
 [Ohjurot-github]: https://github.com/Ohjurot
 
+
+## New Features
+
+The following list contains all the new features that the present project introduces on top of [DualSense-Windows][Dualsense-github]:
+**TODO:** add list here
 
 ## Build Instructions
 

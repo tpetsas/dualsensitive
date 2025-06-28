@@ -1,6 +1,11 @@
 /*
-	DS5State.h is part of DualSenseWindows
+	DS5State.h is part of
+
+    DualSenseWindows
 	https://github.com/Ohjurot/DualSense-Windows
+
+    DualSensitive
+    https://github.com/tpetsas/dualsensitive
 
 	Contributors of this file:
 	11.2020 Ludwig Füchsl
@@ -8,6 +13,7 @@
 
 	Licensed under the MIT License (To be found in repository root directory)
 */
+
 #pragma once
 
 #define DS5W_ISTATE_BTX_SQUARE 0x10
@@ -38,7 +44,7 @@
 #define DS5W_OSTATE_PLAYER_LED_MIDDLE_RIGHT 0x08
 #define DS5W_OSTATE_PLAYER_LED_RIGHT 0x10
 
-#include <dualsense.h>
+#include <dualsensitive.h>
 
 namespace DS5W {
 
@@ -265,7 +271,7 @@ namespace DS5W {
 		};
 	} TriggerEffect;
 
-    // new structure for more options based on what's defind in dualsense.h
+    // new structure for more options based on what's defind in dualsensitive.h
 	typedef struct _TriggerSetting {
         TriggerProfile profile;
         std::vector<unsigned char> extras;
@@ -433,7 +439,7 @@ namespace DS5W {
 		TriggerEffect rightTriggerEffect;
 
         // This is newly added her to be able to choose from
-        // a wider range of trigger options declared in dualsense.h
+        // a wider range of trigger options declared in dualsensitive.h
         bool triggerSettingEnabled;
         TriggerSetting leftTriggerSetting;
         TriggerSetting rightTriggerSetting;

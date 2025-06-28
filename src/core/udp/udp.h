@@ -1,5 +1,13 @@
+/*
+    udp.h is part of DualSensitive
+    https://github.com/tpetsas/dualsensitive
 
-// udp.h
+    Contributors of this file:
+    05.2025 Thanasis Petsas
+
+    Licensed under the MIT License
+*/
+
 #pragma once
 #include <vector>
 #include <cstdint>

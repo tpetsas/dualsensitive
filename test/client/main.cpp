@@ -1,5 +1,5 @@
 
-#include "dualsense.h"
+#include "dualsensitive.h"
 #include "udp.h"
 #include <windows.h>
 #include <iostream>
@@ -65,7 +65,7 @@ bool terminateServer(PROCESS_INFORMATION& procInfo) {
 
 int main() {
     PROCESS_INFORMATION serverProcInfo;
-    std::cout << "Client starting the DualSense Service process...\n";
+    std::cout << "Client starting the DualSensitive Service process...\n";
     //if (!launchServer(serverProcInfo)) {
     if (!launchServerElevated()) {
         return 1;
@@ -75,32 +75,32 @@ int main() {
 
     std::vector<uint8_t> payload;
 
-    auto status = dualsense::init(AgentMode::CLIENT);
-    if (status != dualsense::Status::Ok) {
-        std::cout << "Failed to initialize Dualsensitive in CLIENT mode, status: " << static_cast<std::underlying_type<dualsense::Status>::type>(status) << std::endl;
+    auto status = dualsensitive::init(AgentMode::CLIENT);
+    if (status != dualsensitive::Status::Ok) {
+        std::cout << "Failed to initialize DualSensitive in CLIENT mode, status: " << static_cast<std::underlying_type<dualsensitive::Status>::type>(status) << std::endl;
         return 1;
     }
 
     std::cout << "mode changed to soft" << std::endl;
-    dualsense::setLeftTrigger(TriggerProfile::Choppy);
-    dualsense::setRightTrigger(TriggerProfile::Soft);
+    dualsensitive::setLeftTrigger(TriggerProfile::Choppy);
+    dualsensitive::setRightTrigger(TriggerProfile::Soft);
     Sleep(4000);
 
     std::cout << "mode changed to shotgun" << std::endl;
-    dualsense::setLeftCustomTrigger(TriggerMode::Rigid_A, {60, 71, 56, 128, 195, 210, 255});
-    dualsense::setRightTrigger(TriggerProfile::SlopeFeedback, {0, 5, 1, 8});
+    dualsensitive::setLeftCustomTrigger(TriggerMode::Rigid_A, {60, 71, 56, 128, 195, 210, 255});
+    dualsensitive::setRightTrigger(TriggerProfile::SlopeFeedback, {0, 5, 1, 8});
     Sleep(4000);
 
-    //dualsense::terminate();
-    dualsense::setLeftTrigger(TriggerProfile::Normal);
-    dualsense::setRightTrigger(TriggerProfile::Normal);
+    //dualsensitive::terminate();
+    dualsensitive::setLeftTrigger(TriggerProfile::Normal);
+    dualsensitive::setRightTrigger(TriggerProfile::Normal);
     Sleep(4000);
 
     // Clean up
     if (terminateServer(serverProcInfo)) {
-        std::cout << "Server terminated successfully.\n";
+        std::cout << "DualSensitive Service terminated successfully.\n";
     } else {
-        std::cerr << "Failed to terminate server.\n";
+        std::cerr << "Failed to terminate DualSensitive Service.\n";
     }
 
     return 0;
