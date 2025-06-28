@@ -74,15 +74,25 @@ LRESULT CALLBACK WndProc(HWND g_hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 					updateMenuState();
                     break;
                 case ID_TRAY_EXIT:
-                    Shell_NotifyIconW(NIM_DELETE, &g_nid);
-                    PostQuitMessage(0);
+                    DestroyWindow(g_hWnd); // Triggers cleanup path
                     break;
             }
             break;
+		case WM_CLOSE:
+            DestroyWindow(g_hWnd); // triggers WM_DESTROY
+            break;
 		case WM_DESTROY:
+            dualsensitive::reset();
+            dualsensitive::terminate();
             Shell_NotifyIcon(NIM_DELETE, &g_nid);
             PostQuitMessage(0);
 			break;
+        case WM_QUERYENDSESSION:
+        case WM_ENDSESSION:
+            if (wParam == TRUE) {  // Session is ending
+                dualsensitive::reset();
+            }
+            break;
     }
 
     return DefWindowProc(g_hWnd, msg, wParam, lParam);

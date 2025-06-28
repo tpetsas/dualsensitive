@@ -91,11 +91,6 @@ int main() {
     dualsensitive::setRightTrigger(TriggerProfile::SlopeFeedback, {0, 5, 1, 8});
     Sleep(4000);
 
-    //dualsensitive::terminate();
-    dualsensitive::setLeftTrigger(TriggerProfile::Normal);
-    dualsensitive::setRightTrigger(TriggerProfile::Normal);
-    Sleep(4000);
-
     std::cout << "mode changed to SMG" << std::endl;
     dualsensitive::setLeftCustomTrigger(TriggerMode::Rigid_A, {71, 96, 128, 128, 128, 128, 128} );
     dualsensitive::setRightTrigger(TriggerProfile::Vibration, {3, 4, 14} );
