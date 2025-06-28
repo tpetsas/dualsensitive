@@ -1,4 +1,4 @@
-<img src="https://github.com/user-attachments/assets/989911d5-23e6-403f-b346-4b589d48f186" alt="dualsense-cpp-logo" width="400"/>
+<img src="https://github.com/user-attachments/assets/459c5e0d-b4e8-4661-b689-9842a0bcfa3a" alt="DualSensitive-logo" width="400"/>
 
 # DualSensitive
 Windows C++ API for controlling the PS5 DualSense controller
