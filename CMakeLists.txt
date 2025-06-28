@@ -43,7 +43,11 @@ target_link_libraries(solo-test PRIVATE dualsensitive)
 
 # server executable (runs the UDP server)
 add_executable(dualsensitive-service src/service/main.cpp)
-target_sources(dualsensitive-service PRIVATE resources.rc)
+target_sources(dualsensitive-service PRIVATE
+    src/service/main.cpp
+    src/service/resources.rc
+    src/service/resource.h
+)
 # Mark as Windows GUI app to suppress console window
 set_target_properties(dualsensitive-service PROPERTIES
     WIN32_EXECUTABLE TRUE

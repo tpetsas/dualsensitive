@@ -6,6 +6,7 @@
 #include <shellapi.h>
 #include <thread>
 
+#include "resource.h"
 // Tray icon definitions
 #define WM_TRAYICON (WM_USER + 1)
 #define ID_TRAY_EXIT 1001
@@ -55,7 +56,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     nid.uID = 1;
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_TRAYICON;
-    nid.hIcon = LoadIcon(nullptr, IDI_INFORMATION);
+    nid.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
     wcscpy_s(nid.szTip, L"Dualsensitive Service");
     Shell_NotifyIconW(NIM_ADD, &nid);
 
