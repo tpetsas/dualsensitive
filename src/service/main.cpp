@@ -56,15 +56,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     nid.uCallbackMessage = WM_TRAYICON;
     nid.hIcon = LoadIcon(nullptr, IDI_INFORMATION);
-    wcscpy_s(nid.szTip, L"DualSense UDP Server");
+    wcscpy_s(nid.szTip, L"Dualsensitive Service");
     Shell_NotifyIconW(NIM_ADD, &nid);
 
     // Start DualSense UDP server
     std::thread([]() {
-        OutputDebugStringW(L"Starting DualSense UDP server...\n");
+        OutputDebugStringW(L"Starting Dualsensitive Service...\n");
         auto status = dualsense::init(AgentMode::SERVER);
         if (status != dualsense::Status::Ok) {
-            OutputDebugStringW(L"Failed to initialize DualSense in SERVER mode\n");
+            OutputDebugStringW(L"Failed to initialize Dualsensitive in SERVER mode\n");
         }
     }).detach();
 

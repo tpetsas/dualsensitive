@@ -5,15 +5,17 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 file(GLOB_RECURSE SOURCE_FILES
-    ${PROJECT_SOURCE_DIR}/src/*.cpp
-    ${PROJECT_SOURCE_DIR}/src/*.h
+    ${PROJECT_SOURCE_DIR}/src/core/*.cpp
+    ${PROJECT_SOURCE_DIR}/src/core/udp/*.cpp
+    ${PROJECT_SOURCE_DIR}/src/dualsense.cpp
 )
 
 # Create the static lib
 add_library(dualsense STATIC ${SOURCE_FILES})
 
 target_include_directories(dualsense PUBLIC
-    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/src/core
+    ${PROJECT_SOURCE_DIR}/src/core/udp
     ${PROJECT_SOURCE_DIR}/include
 )
 
@@ -40,16 +42,15 @@ target_include_directories(solo-test PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(solo-test PRIVATE dualsense)
 
 # server executable (runs the UDP server)
-add_executable(dualsense-service test/server/main.cpp)
+add_executable(dualsensitive-service src/service/main.cpp)
 # Mark as Windows GUI app to suppress console window
-set_target_properties(dualsense-service PROPERTIES
+set_target_properties(dualsensitive-service PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
-target_link_libraries(dualsense-service PRIVATE dualsense)
-target_include_directories(dualsense-service PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(dualsensitive-service PRIVATE dualsense)
+target_include_directories(dualsensitive-service PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 # client executable (launches server and sends triggers)
 add_executable(client test/client/main.cpp)
 target_link_libraries(client PRIVATE dualsense)
 target_include_directories(client PRIVATE ${PROJECT_SOURCE_DIR}/include)
-

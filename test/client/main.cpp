@@ -5,7 +5,7 @@
 #include <iostream>
 
 
-bool launchServerElevated(const std::wstring& exePath = L"./dualsense-service.exe") {
+bool launchServerElevated(const std::wstring& exePath = L"./dualsensitive-service.exe") {
     wchar_t fullExePath[MAX_PATH];
     if (!GetFullPathNameW(exePath.c_str(), MAX_PATH, fullExePath, nullptr)) {
         return false;
@@ -25,7 +25,7 @@ bool launchServerElevated(const std::wstring& exePath = L"./dualsense-service.ex
     return true;
 }
 
-bool launchServer(PROCESS_INFORMATION& outProcInfo, const std::wstring& exePath = L"./dualsense-service.exe") {
+bool launchServer(PROCESS_INFORMATION& outProcInfo, const std::wstring& exePath = L"./dualsensitive-service.exe") {
     STARTUPINFOW si = { sizeof(si) };
     ZeroMemory(&outProcInfo, sizeof(outProcInfo));
 
@@ -43,7 +43,7 @@ bool launchServer(PROCESS_INFORMATION& outProcInfo, const std::wstring& exePath 
     );
 
     if (!success) {
-        std::cerr << "Failed to launch server.exe. Error: " << GetLastError() << "\n";
+        std::cerr << "Failed to launch dualsensitive-service.exe. Error: " << GetLastError() << "\n";
         return false;
     }
 
@@ -65,7 +65,7 @@ bool terminateServer(PROCESS_INFORMATION& procInfo) {
 
 int main() {
     PROCESS_INFORMATION serverProcInfo;
-    std::cout << "Client starting server process...\n";
+    std::cout << "Client starting the DualSense Service process...\n";
     //if (!launchServer(serverProcInfo)) {
     if (!launchServerElevated()) {
         return 1;
@@ -77,7 +77,7 @@ int main() {
 
     auto status = dualsense::init(AgentMode::CLIENT);
     if (status != dualsense::Status::Ok) {
-        std::cout << "Failed to initialize DualSense in CLIENT mode, status: " << static_cast<std::underlying_type<dualsense::Status>::type>(status) << std::endl;
+        std::cout << "Failed to initialize Dualsensitive in CLIENT mode, status: " << static_cast<std::underlying_type<dualsense::Status>::type>(status) << std::endl;
         return 1;
     }
 
