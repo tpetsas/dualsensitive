@@ -19,15 +19,24 @@ HINSTANCE g_hInstance;
 HMENU g_hMenu;
 HWND g_hWnd;
 
-void updateTrayIcon() {
+void setTrayIcon() {
     g_nid.cbSize = sizeof(NOTIFYICONDATA);
     g_nid.hWnd = g_hWnd;
     g_nid.uID = TRAY_UID;
     g_nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     g_nid.uCallbackMessage = WM_TRAYICON;
-    g_nid.hIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(101)); // IDI_ICON1
+    g_nid.hIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_ICON_ACTIVE));
     wcscpy_s(g_nid.szTip, L"Dualsensitive Service");
     Shell_NotifyIcon(NIM_ADD, &g_nid);
+}
+
+void updateTrayIcon() {
+    g_nid.hIcon = LoadIcon(g_hInstance,
+            MAKEINTRESOURCE (
+                dualsensitive::isEnabled() ? IDI_ICON_ACTIVE : IDI_ICON_MUTED
+            )
+    );
+    Shell_NotifyIcon(NIM_MODIFY, &g_nid);
 }
 
 void updateMenuState() {
@@ -50,7 +59,11 @@ void showContextMenu() {
 
     updateMenuState();
     SetForegroundWindow(g_hWnd);
-    TrackPopupMenu(g_hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, g_hWnd, NULL);
+    TrackPopupMenu (
+        g_hMenu,
+        TPM_BOTTOMALIGN | TPM_LEFTALIGN,
+        pt.x, pt.y, 0, g_hWnd, NULL
+    );
 }
 
 
@@ -67,11 +80,13 @@ LRESULT CALLBACK WndProc(HWND g_hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 case ID_TRAY_ENABLE:
                     dualsensitive::enable();
 					updateMenuState();
+                    updateTrayIcon();
                     break;
                 case ID_TRAY_DISABLE:
                     dualsensitive::reset();
                     dualsensitive::disable();
 					updateMenuState();
+                    updateTrayIcon();
                     break;
                 case ID_TRAY_EXIT:
                     DestroyWindow(g_hWnd); // Triggers cleanup path
@@ -116,12 +131,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 // Setup menu
     g_hMenu = CreatePopupMenu();
-    AppendMenu(g_hMenu, MF_STRING, ID_TRAY_ENABLE, L"Enable Adaptive Triggers");
-    AppendMenu(g_hMenu, MF_STRING, ID_TRAY_DISABLE, L"Disable Adaptive Triggers");
+    AppendMenu (
+            g_hMenu, MF_STRING, ID_TRAY_ENABLE,
+            L"Enable Adaptive Triggers"
+    );
+    AppendMenu (
+            g_hMenu, MF_STRING, ID_TRAY_DISABLE,
+            L"Disable Adaptive Triggers"
+    );
     AppendMenu(g_hMenu, MF_SEPARATOR, 0, nullptr);
     AppendMenu(g_hMenu, MF_STRING, ID_TRAY_EXIT, L"Exit");
 
-    updateTrayIcon();
+    setTrayIcon();
     updateMenuState();
 
     // Start DualSensitive UDP server
@@ -129,8 +150,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         OutputDebugStringW(L"Starting Dualsensitive Service...\n");
         auto status = dualsensitive::init(AgentMode::SERVER);
         if (status != dualsensitive::Status::Ok) {
-            OutputDebugStringW(L"Failed to initialize Dualsensitive in SERVER mode\n");
+            OutputDebugStringW (
+                L"Failed to initialize Dualsensitive in SERVER mode\n"
+            );
         }
+        updateTrayIcon();
     }).detach();
 
     // Message loop

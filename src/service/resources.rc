@@ -1,3 +1,4 @@
 #include "resource.h"
 
-IDI_ICON1 ICON "../assets/DualSensitive_gray.ico"
+IDI_ICON_ACTIVE ICON "../assets/DualSensitive_gray.ico"
+IDI_ICON_MUTED  ICON "../assets/DualSensitive_gray_disabled.ico"
