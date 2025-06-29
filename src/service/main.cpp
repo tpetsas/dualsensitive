@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <thread>
+#include <atomic>
 
 #include "resource.h"
 // Tray icon definitions
@@ -18,6 +19,9 @@ NOTIFYICONDATAW g_nid = {};
 HINSTANCE g_hInstance;
 HMENU g_hMenu;
 HWND g_hWnd;
+
+std::thread monitorThread;
+std::atomic<bool> monitorRunning = true;
 
 void setTrayIcon() {
     g_nid.cbSize = sizeof(NOTIFYICONDATA);
@@ -59,16 +63,23 @@ void showContextMenu() {
 
     updateMenuState();
     SetForegroundWindow(g_hWnd);
-    TrackPopupMenu (
-        g_hMenu,
-        TPM_BOTTOMALIGN | TPM_LEFTALIGN,
+
+    HMENU hMenu = g_hMenu;
+
+    int cmd = TrackPopupMenu (
+        hMenu,
+        TPM_RETURNCMD | TPM_NONOTIFY | TPM_BOTTOMALIGN | TPM_LEFTALIGN,
         pt.x, pt.y, 0, g_hWnd, NULL
     );
+    // if a command was selected, dispatch it manually
+    if (cmd != 0) {
+        PostMessage(g_hWnd, WM_COMMAND, cmd, 0);
+    }
 }
 
 
 // Basic window procedurej
-LRESULT CALLBACK WndProc(HWND g_hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch(msg) {
         case WM_TRAYICON:
             if (lParam == WM_RBUTTONUP) {
@@ -89,7 +100,10 @@ LRESULT CALLBACK WndProc(HWND g_hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     updateTrayIcon();
                     break;
                 case ID_TRAY_EXIT:
-                    DestroyWindow(g_hWnd); // Triggers cleanup path
+                    // Remove tray icon BEFORE window is destroyed to avoid ghosting
+                    monitorRunning = false;
+                    Shell_NotifyIcon(NIM_DELETE, &g_nid);
+                    PostMessage(g_hWnd, WM_CLOSE, 0, 0);
                     break;
             }
             break;
@@ -97,9 +111,10 @@ LRESULT CALLBACK WndProc(HWND g_hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             DestroyWindow(g_hWnd); // triggers WM_DESTROY
             break;
 		case WM_DESTROY:
+            monitorRunning = false;
             dualsensitive::reset();
             dualsensitive::terminate();
-            Shell_NotifyIcon(NIM_DELETE, &g_nid);
+            if (monitorThread.joinable()) monitorThread.join();
             PostQuitMessage(0);
 			break;
         case WM_QUERYENDSESSION:
@@ -110,7 +125,30 @@ LRESULT CALLBACK WndProc(HWND g_hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             break;
     }
 
-    return DefWindowProc(g_hWnd, msg, wParam, lParam);
+    return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+
+bool isProcessAlive(DWORD pid) {
+    HANDLE h = OpenProcess(SYNCHRONIZE, FALSE, pid);
+    if (!h) return false;
+    DWORD result = WaitForSingleObject(h, 0);
+    CloseHandle(h);
+    return result == WAIT_TIMEOUT;
+}
+
+void startMonitorThread() {
+    monitorThread = std::thread([] {
+        while (monitorRunning) {
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            DWORD pid = (DWORD) dualsensitive::getClientPid();
+            if (pid && !isProcessAlive(pid)) {
+                // Client process exited, shutting down DualSensitive service...
+                PostMessage(g_hWnd, WM_CLOSE, 0, 0);
+                break;
+            }
+        }
+    });
 }
 
 // Entry point
@@ -124,12 +162,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     wc.lpszClassName = CLASS_NAME;
     RegisterClass(&wc);
 
+    DWORD style = WS_OVERLAPPED;
+    DWORD exStyle = WS_EX_TOOLWINDOW;
+
     g_hWnd = CreateWindowEx(
-        0, CLASS_NAME, L"DualSensitive", 0,
-        0, 0, 0, 0, HWND_MESSAGE, nullptr, hInstance, nullptr
+        exStyle, CLASS_NAME, L"DualSensitive", style,
+        0, 0, 0, 0, nullptr, nullptr, hInstance, nullptr
     );
 
-// Setup menu
+    // Setup menu
     g_hMenu = CreatePopupMenu();
     AppendMenu (
             g_hMenu, MF_STRING, ID_TRAY_ENABLE,
@@ -146,16 +187,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     updateMenuState();
 
     // Start DualSensitive UDP server
-    std::thread([]() {
-        OutputDebugStringW(L"Starting Dualsensitive Service...\n");
-        auto status = dualsensitive::init(AgentMode::SERVER);
-        if (status != dualsensitive::Status::Ok) {
-            OutputDebugStringW (
-                L"Failed to initialize Dualsensitive in SERVER mode\n"
-            );
-        }
-        updateTrayIcon();
-    }).detach();
+    OutputDebugStringW(L"Starting Dualsensitive Service...\n");
+    auto status = dualsensitive::init(AgentMode::SERVER);
+    if (status != dualsensitive::Status::Ok) {
+        OutputDebugStringW (
+            L"Failed to initialize Dualsensitive in SERVER mode\n"
+        );
+    }
+    updateTrayIcon();
+
+    // Start monitor thread to make sure we shutdown the DualSensitive Service
+    // when the client app turns off
+    startMonitorThread();
 
     // Message loop
     MSG msg;
@@ -164,6 +207,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         DispatchMessage(&msg);
     }
 
-    dualsensitive::terminate();
     return 0;
 }

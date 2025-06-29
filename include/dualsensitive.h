@@ -29,6 +29,18 @@ enum class AgentMode {
     CLIENT
 };
 
+/**
+ * Defines the payload type to be sent to the DualSensitive Service
+ * Supported types:
+ *  - BIND: bind packet with PID
+ *  - TRIGGER: trigger packet (existing behavior)
+ */
+enum class PayloadType : uint8_t {
+    BIND,
+    TRIGGER
+};
+
+
 
 enum class TriggerMode : uint8_t {
     Off = 0x00,
@@ -115,6 +127,9 @@ namespace dualsensitive {
     };
 
     bool isConnected(void);
+
+    uint32_t getClientPid(void);
+    void sendPidToServer(void);
 
     void ensureConnected(void);
 

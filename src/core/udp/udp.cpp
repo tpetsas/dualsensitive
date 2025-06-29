@@ -35,6 +35,7 @@ static std::thread serverThread;
 static std::atomic<bool> serverRunning = false;
 static CallbackFunc packetHandler = nullptr;
 static std::mutex initMutex;
+static WSAEVENT serverEvent = WSA_INVALID_EVENT;
 
 namespace udp {
 
@@ -82,21 +83,40 @@ namespace udp {
             WSACleanup();
             return Status::BindFailed;
         }
+
+        // add event handle to wake up recvfrom() when either:
+        // - data arrives (default behaviof)
+        // - the socket is closed
+        serverEvent = WSACreateEvent();
+        WSAEventSelect(serverSocket, serverEvent, FD_READ | FD_CLOSE);
+
         serverRunning = true;
         serverThread = std::thread([]() {
             char buffer[MAX_PAYLOAD_SIZE];
             sockaddr_in clientAddr{};
             int clientLen = sizeof(clientAddr);
             while (serverRunning) {
-                int recvLen = recvfrom(serverSocket, buffer, sizeof(buffer), 0,
-                                       (sockaddr*)&clientAddr, &clientLen);
-                if (recvLen == SOCKET_ERROR) {
-                    std::cerr << "recvfrom error: " << WSAGetLastError() << std::endl;
+                DWORD waitResult = WSAWaitForMultipleEvents(1, &serverEvent, FALSE, 1000, FALSE);
+                if (waitResult == WSA_WAIT_FAILED) break;
+                if (waitResult == WSA_WAIT_TIMEOUT) continue;
+
+                WSANETWORKEVENTS networkEvents;
+                if (WSAEnumNetworkEvents(serverSocket, serverEvent, &networkEvents) == SOCKET_ERROR) break;
+
+                if (networkEvents.lNetworkEvents & FD_READ) {
+                    int recvLen = recvfrom(serverSocket, buffer, sizeof(buffer), 0,
+                                           (sockaddr*)&clientAddr, &clientLen);
+                    if (recvLen == SOCKET_ERROR) {
+                        std::cerr << "recvfrom error: " << WSAGetLastError() << std::endl;
+                    }
+                    std::cout << "[UDP Server] Received packet of size " << recvLen << std::endl;
+                    if (recvLen > 0 && packetHandler) {
+                        std::vector<uint8_t> payload(buffer, buffer + recvLen);
+                        packetHandler(payload);
+                    }
                 }
-                std::cout << "[UDP Server] Received packet of size " << recvLen << std::endl;
-                if (recvLen > 0 && packetHandler) {
-                    std::vector<uint8_t> payload(buffer, buffer + recvLen);
-                    packetHandler(payload);
+                if (networkEvents.lNetworkEvents & FD_CLOSE) {
+                    break;
                 }
             }
         });
@@ -114,6 +134,13 @@ namespace udp {
 
         closesocket(serverSocket);
         serverSocket = INVALID_SOCKET;
+
+        // Close the associated WSA event (important to unblock wait)
+        if (serverEvent != WSA_INVALID_EVENT) {
+            WSASetEvent(serverEvent); // Wake the thread NOW
+            WSACloseEvent(serverEvent);
+            serverEvent = WSA_INVALID_EVENT;
+        }
 
         if (serverThread.joinable()) {
             serverThread.join();

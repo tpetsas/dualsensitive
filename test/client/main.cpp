@@ -81,6 +81,8 @@ int main() {
         return 1;
     }
 
+    dualsensitive::sendPidToServer();
+
     std::cout << "mode changed to soft" << std::endl;
     dualsensitive::setLeftTrigger(TriggerProfile::Choppy);
     dualsensitive::setRightTrigger(TriggerProfile::Soft);
@@ -95,7 +97,6 @@ int main() {
     dualsensitive::setLeftCustomTrigger(TriggerMode::Rigid_A, {71, 96, 128, 128, 128, 128, 128} );
     dualsensitive::setRightTrigger(TriggerProfile::Vibration, {3, 4, 14} );
     Sleep(4000);
-
     std::cout << "mode changed to railgun" << std::endl;
     dualsensitive::setLeftTrigger(TriggerProfile::Machine, {1, 8, 3, 3, 184, 0} );
     dualsensitive::setRightCustomTrigger(TriggerMode::Pulse_B, {238, 215, 66, 120, 43, 160, 215});
@@ -130,13 +131,5 @@ int main() {
     dualsensitive::setLeftTrigger(TriggerProfile::Vibration, {1, 10, 8});
     dualsensitive::setRightTrigger(TriggerProfile::MultiplePositionVibration, {10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8});
     Sleep(4000);
-
-    // Clean up
-    if (terminateServer(serverProcInfo)) {
-        std::cout << "DualSensitive Service terminated successfully.\n";
-    } else {
-        std::cerr << "Failed to terminate DualSensitive Service.\n";
-    }
-
     return 0;
 }

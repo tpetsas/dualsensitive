@@ -29,6 +29,8 @@
 #define PROFILE_INDEX 1
 #define EXTRAS_SIZE_INDEX 2
 #define MIN_PAYLOAD_SIZE 3
+#define PAYLOAD_TYPE_SIZE 1
+#define PID_SIZE 4
 #define EXTRAS_BUFFER_INDEX 3
 
 // for the retry logic used for connecting to the controller
@@ -42,15 +44,37 @@ enum class Trigger : uint8_t {
     Right = 1
 };
 
-std::vector<uint8_t> serializeTriggerPayload(Trigger trigger, TriggerProfile profile, const std::vector<uint8_t>& extras) {
+
+std::vector<uint8_t> serializeBindPayload(uint32_t pid) {
     std::vector<uint8_t> buffer;
-    buffer.push_back(static_cast<uint8_t>(trigger));            // 1 byte: trigger
-    buffer.push_back(static_cast<int8_t>(profile));             // 1 byte: profile
-    buffer.push_back(static_cast<uint8_t>(extras.size()));      // 1 byte: extras length
-    buffer.insert(buffer.end(), extras.begin(), extras.end());  // extras
+    buffer.push_back(static_cast<uint8_t>(PayloadType::BIND));  // 1 byte
+    buffer.push_back((pid >>  0) & 0xFF);
+    buffer.push_back((pid >>  8) & 0xFF);
+    buffer.push_back((pid >> 16) & 0xFF);
+    buffer.push_back((pid >> 24) & 0xFF);
     return buffer;
 }
 
+bool deserializeBindPayload(const std::vector<uint8_t>& buffer, uint32_t& pid) {
+
+    if (buffer.size() < PID_SIZE) {
+        ERROR_PRINT("Bind PID payload too small!");
+        return false;
+    }
+    pid = (buffer[0]) | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+    INFO_PRINT("Bound to client PID: " << pid);
+    return true;
+}
+
+std::vector<uint8_t> serializeTriggerPayload(Trigger trigger, TriggerProfile profile, const std::vector<uint8_t>& extras) {
+    std::vector<uint8_t> buffer;
+    buffer.push_back(static_cast<uint8_t>(PayloadType::TRIGGER));   // 1 byte
+    buffer.push_back(static_cast<uint8_t>(trigger));                // 1 byte
+    buffer.push_back(static_cast<int8_t>(profile));                 // 1 byte
+    buffer.push_back(static_cast<uint8_t>(extras.size()));          // 1 byte
+    buffer.insert(buffer.end(), extras.begin(), extras.end());      // extras
+    return buffer;
+}
 
 bool deserializeTriggerPayload(const std::vector<uint8_t>& buffer, Trigger& trigger, TriggerProfile& profile, std::vector<uint8_t>& extras) {
     if (buffer.size() < MIN_PAYLOAD_SIZE) {
@@ -553,6 +577,8 @@ namespace dualsensitive {
     // controller
     static std::mutex enabledMutex;
     static bool enabled = true;
+    static std::mutex clientPidMutex;
+    static uint32_t clientPid;
 
     // support a single controller for now (on SOLO and SERVER modes only)
 	DS5W::DeviceContext controller;
@@ -567,6 +593,11 @@ namespace dualsensitive {
         }
 	    DS5W::DS5InputState inState;
         return DS5W_SUCCESS(DS5W::getDeviceInputState(&controller, &inState));
+    }
+
+    uint32_t getClientPid(void) {
+        std::lock_guard<std::mutex> lock(clientPidMutex);
+        return clientPid;
     }
 
     // XXX This should be called in a block where the initMutex lock has been acquired
@@ -668,15 +699,51 @@ namespace dualsensitive {
             case AgentMode::SERVER: {
                 udpPort = port;
                 auto callback = [](const std::vector<uint8_t>& payload) {
-                    if (payload.size() < MIN_PAYLOAD_SIZE) {
-                        ERROR_PRINT("Payload size less than expected!");
+                    if (payload.empty()) {
+                        ERROR_PRINT("Payload empty!");
                         return;
                     }
-                    if(!assignTriggersFromPayload(payload)) {
-                        ERROR_PRINT("Could not set triggers from payload!");
-                        return;
-                    }
-                    sendState();
+                    PayloadType type = static_cast<PayloadType>(payload[0]);
+
+                    switch (type) {
+                        case PayloadType::BIND: {
+                            if (payload.size() < PAYLOAD_TYPE_SIZE + PID_SIZE) {
+                                ERROR_PRINT("Bind PID payload too small!");
+                                return;
+                            }
+                            // skip the payload type
+                            std::vector<uint8_t> trimmed (
+                                    payload.begin() + 1,
+                                    payload.end()
+                            );
+                            {
+                                std::lock_guard<std::mutex> lock(clientPidMutex);
+                                if (!deserializeBindPayload(trimmed, clientPid)) {
+                                    ERROR_PRINT("failed to deserialize Bind PID payload!");
+                                    return;
+                                }
+                            }
+                            break;
+                        }
+                        case PayloadType::TRIGGER: {
+                            if (payload.size() < MIN_PAYLOAD_SIZE + PAYLOAD_TYPE_SIZE) {
+                                ERROR_PRINT("Trigger payload size less than expected!");
+                                return;
+                            }
+                            // skip the payload type
+                            std::vector<uint8_t> trimmed (
+                                    payload.begin() + 1,
+                                    payload.end()
+                            );
+                            if(!assignTriggersFromPayload(trimmed)) {
+                                ERROR_PRINT("Could not set triggers from payload!");
+                                return;
+                            }
+                            sendState();
+                        }
+                        default:
+                            ERROR_PRINT("Unknown payload type: " << static_cast<uint8_t>(type) << "!");
+                    };
                 };
 
                 if (udp::startServer(udpPort, callback) != udp::Status::Success)
@@ -718,6 +785,14 @@ namespace dualsensitive {
         // only on SERVER and SOLO mode
 
         DS5W::freeDeviceContext(&controller);
+    }
+
+    void sendPidToServer(void) {
+        if (agentMode != AgentMode::CLIENT) {
+            ERROR_PRINT("sendPidToServer() is only available in CLIENT mode");
+            return;
+        }
+        udp::send(serializeBindPayload(GetCurrentProcessId()));
     }
 
     void setTrigger(Trigger trigger, TriggerProfile triggerProfile,
