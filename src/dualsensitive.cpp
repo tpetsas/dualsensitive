@@ -738,6 +738,7 @@ namespace dualsensitive {
                                 ERROR_PRINT("Could not set triggers from payload!");
                                 return;
                             }
+                            break;
                         }
                         default:
                             ERROR_PRINT("Unknown payload type: " << static_cast<uint8_t>(type) << "!");
