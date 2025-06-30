@@ -44,7 +44,7 @@ void updateTrayIcon() {
 }
 
 void updateMenuState() {
-	 if (dualsensitive::isEnabled()) {
+     if (dualsensitive::isEnabled()) {
         EnableMenuItem(g_hMenu, ID_TRAY_ENABLE, MF_BYCOMMAND | MF_GRAYED);
         EnableMenuItem(g_hMenu, ID_TRAY_DISABLE, MF_BYCOMMAND | MF_ENABLED);
         CheckMenuItem(g_hMenu, ID_TRAY_ENABLE, MF_BYCOMMAND | MF_CHECKED);
@@ -83,21 +83,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch(msg) {
         case WM_TRAYICON:
             if (lParam == WM_RBUTTONUP) {
-				showContextMenu();
+                showContextMenu();
             }
             break;
         case WM_COMMAND:
             switch(LOWORD(wParam)) {
                 case ID_TRAY_ENABLE:
                     dualsensitive::enable();
-					updateMenuState();
                     updateTrayIcon();
+                    updateMenuState();
                     break;
                 case ID_TRAY_DISABLE:
-                    dualsensitive::reset();
                     dualsensitive::disable();
-					updateMenuState();
                     updateTrayIcon();
+                    updateMenuState();
+                    dualsensitive::reset();
                     break;
                 case ID_TRAY_EXIT:
                     // Remove tray icon BEFORE window is destroyed to avoid ghosting
@@ -107,16 +107,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     break;
             }
             break;
-		case WM_CLOSE:
+        case WM_CLOSE:
             DestroyWindow(g_hWnd); // triggers WM_DESTROY
             break;
-		case WM_DESTROY:
+        case WM_DESTROY:
             monitorRunning = false;
             dualsensitive::reset();
             dualsensitive::terminate();
             if (monitorThread.joinable()) monitorThread.join();
             PostQuitMessage(0);
-			break;
+            break;
         case WM_QUERYENDSESSION:
         case WM_ENDSESSION:
             if (wParam == TRUE) {  // Session is ending

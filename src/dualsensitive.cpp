@@ -106,34 +106,34 @@ std::string wstring_to_utf8(const std::wstring& ws) {
 }
 
 int scanControllers(std::vector<DS5W::DeviceEnumInfo>& infosVector) {
-	// list all DualSense controllers
-	DS5W::DeviceEnumInfo infos[CONTROLLER_LIMIT];
-	unsigned int controllersCount = 0;
-	DS5W::enumDevices (
+    // list all DualSense controllers
+    DS5W::DeviceEnumInfo infos[CONTROLLER_LIMIT];
+    unsigned int controllersCount = 0;
+    DS5W::enumDevices (
         infos, DEVICE_ENUM_INFO_SZ, &controllersCount
     );
 
-	if (controllersCount == 0) {
-		ERROR_PRINT("No DualSense controllers found!");
-		return -1;
-	}
+    if (controllersCount == 0) {
+        ERROR_PRINT("No DualSense controllers found!");
+        return -1;
+    }
 
-	// print all controllers
-	DEBUG_PRINT("Found " << controllersCount << " DualSense Controller(s):");
+    // print all controllers
+    DEBUG_PRINT("Found " << controllersCount << " DualSense Controller(s):");
 
 
-	// Iterate controllers
-	for (unsigned int i = 0; i < controllersCount; i++) {
+    // Iterate controllers
+    for (unsigned int i = 0; i < controllersCount; i++) {
         infosVector.push_back(infos[i]);
         DEBUG_PRINT(
             ((infos[i]._internal.connection == DS5W::DeviceConnection::BT) ?
             std::string("Wireless (Bluetooth)") :
-			std::string("Wired (USB)"))
+            std::string("Wired (USB)"))
             << " controller ("
             << wstring_to_utf8(std::wstring(infos[i]._internal.path))
             << ")"
         );
-	}
+    }
     return 0;
 }
 
@@ -581,17 +581,17 @@ namespace dualsensitive {
     static uint32_t clientPid;
 
     // support a single controller for now (on SOLO and SERVER modes only)
-	DS5W::DeviceContext controller;
+    DS5W::DeviceContext controller;
     // structure to keep the state to send out to controller
     // (on SOLO and CLIENT modes only)
-	DS5W::DS5OutputState outState;
+    DS5W::DS5OutputState outState;
 
     bool isConnected(void) {
         if (agentMode == AgentMode::CLIENT) {
             ERROR_PRINT("Not applicable in CLIENT mode");
             return false;
         }
-	    DS5W::DS5InputState inState;
+        DS5W::DS5InputState inState;
         return DS5W_SUCCESS(DS5W::getDeviceInputState(&controller, &inState));
     }
 
@@ -624,6 +624,10 @@ namespace dualsensitive {
             DEBUG_PRINT("DualSense controller connnected");
             hasInit = true;
             ZeroMemory(&outState, sizeof(DS5W::DS5OutputState));
+
+            // enable red color by default with medium intensity
+            outState.lightbar = DS5W::color_R8G8B8_UCHAR_A32_FLOAT(255, 0, 0, 128);
+            outState.disableLeds = false;
             break;
         }
         return status;
@@ -868,7 +872,7 @@ namespace dualsensitive {
             return;
         }
         ensureConnected();
-	    DS5W::setDeviceOutputState(&controller, &outState);
+        DS5W::setDeviceOutputState(&controller, &outState);
     }
 
     void disable(void) {

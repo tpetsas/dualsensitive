@@ -1,3 +1,19 @@
+/*
+	DS5_Output.h is part of
+
+    DualSenseWindows
+	https://github.com/Ohjurot/DualSense-Windows
+
+    DualSensitive
+    https://github.com/tpetsas/dualsensitive
+
+	Contributors of this file:
+	11.2020 Ludwig Füchsl
+    05.2025 Thanasis Petsas
+
+	Licensed under the MIT License (To be found in repository root directory)
+*/
+
 #include "DS5_Output.h"
 #include "logger.h"
 
