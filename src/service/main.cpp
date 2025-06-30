@@ -188,7 +188,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
     // Start DualSensitive UDP server
     OutputDebugStringW(L"Starting Dualsensitive Service...\n");
-    auto status = dualsensitive::init(AgentMode::SERVER);
+    auto status = dualsensitive::init(AgentMode::SERVER, "dualsensitive-service.log", false);
     if (status != dualsensitive::Status::Ok) {
         OutputDebugStringW (
             L"Failed to initialize Dualsensitive in SERVER mode\n"
