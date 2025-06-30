@@ -664,17 +664,13 @@ namespace dualsensitive {
         outState.triggerSettingEnabled = true;
         switch (trigger) {
             case Trigger::Left:
-                //setLeftTrigger(profile, extras);
-                outState.leftTriggerSetting.profile = profile;
-                outState.leftTriggerSetting.extras = extras;
+                setLeftTrigger(profile, extras);
                 break;
             case Trigger::Right:
-                //setRightTrigger(profile, extras);
-                outState.rightTriggerSetting.profile = profile;
-                outState.rightTriggerSetting.extras = extras;
+                setRightTrigger(profile, extras);
                 break;
             default:
-                ERROR_PRINT("Unknown trigger type!");
+                DEBUG_PRINT("Unknown trigger type!");
                 return false;
         };
         return true;
@@ -685,7 +681,6 @@ namespace dualsensitive {
         agentMode = mode;
 
         // true will enable debug output
-        // TODO: add a bool parameter so we can tweak that as we want
         Logger::init(enableDebug);
         if (!Logger::setLogFile(logPath)) {
             ERROR_PRINT("Failed to set log file. Falling back to stdout.");
@@ -743,7 +738,6 @@ namespace dualsensitive {
                                 ERROR_PRINT("Could not set triggers from payload!");
                                 return;
                             }
-                            sendState();
                         }
                         default:
                             ERROR_PRINT("Unknown payload type: " << static_cast<uint8_t>(type) << "!");
@@ -812,8 +806,8 @@ namespace dualsensitive {
                 break;
             }
             case AgentMode::SERVER:
-                //ERROR_PRINT("Not applicable in SERVER mode");
-                //break;
+                // we need this so that assignTriggersFromPayload sets the
+                // triggers in server mode here
             case AgentMode::SOLO:
             default:
                 outState.triggerSettingEnabled = true;

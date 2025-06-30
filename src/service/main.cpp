@@ -94,10 +94,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     updateMenuState();
                     break;
                 case ID_TRAY_DISABLE:
+                    dualsensitive::reset();
                     dualsensitive::disable();
                     updateTrayIcon();
                     updateMenuState();
-                    dualsensitive::reset();
                     break;
                 case ID_TRAY_EXIT:
                     // Remove tray icon BEFORE window is destroyed to avoid ghosting
