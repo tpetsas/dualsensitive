@@ -29,28 +29,28 @@ those or serve as a base for mods, game integrations, or tooling.
 
 The following list contains all the new features that the present project introduces on top of [DualSense-Windows][Dualsense-github]:
 
-- **Additional Trigger Profiles**
+- **Additional Trigger Profiles** —
   Based on personal experimentation.
 
-- **Custom Trigger Mode**
+- **Custom Trigger Mode** —
   Inspired by [DualSenseX][DualSenseX-github] and [DualSenseY][DualSenseY-github], allowing fully customizable trigger behavior.
 
-- **Logging Support**
+- **Logging Support** —
   Introduced structured logging for better debugging and diagnostics.
 
-- **Agent Modes**
+- **Agent Modes** —
   Introduced three operational modes:
   - **SOLO**: Direct access to the DualSense controller (same as before)
   - **SERVER**: Background service managing the controller
   - **CLIENT**: Forwards trigger settings to the server via UDP
 
-- **Tray Application (SERVER Mode)**
+- **Tray Application (SERVER Mode)** —
   The server now runs as a system tray app, including an option to enable or disable adaptive triggers on demand.
 
-- **Automatic Service Shutdown (CLIENT/SERVER Modes)**
+- **Automatic Service Shutdown (CLIENT/SERVER Modes)** —
   The server can automatically terminate itself when the client exits, using a monitoring thread that checks the client’s PID.
 
-- **Improved Reconnect Logic**
+- **Improved Reconnect Logic** —
   Added mutex-based synchronization to enhance stability during device reconnection.
 
 ## Build Instructions
@@ -64,14 +64,14 @@ mkdir build; cd build; cmake .. -G "Visual Studio 17 2022"; cmake --build . --co
 The Tray Application when DualSensitive is running on SERVER mode will be in the system tray with the DualSensitive icon as shown here:
 
 There are only two options available at the moment:
-- **Enable/Disable Adaptive Triggers**
+- **Enable/Disable Adaptive Triggers** —
 Ability to enable or disable the Adaptive Triggers settings via the following provided by right clicking the DualSensitive tray icon.
 
 Here's an example of how the icon will be shown when the "Disable Adaptive Triggers" is selected:
 
 When the "Enable Adaptive Triggers" option is selected again, the tray icon should go back to normal:
 
-- **Exit**
+- **Exit** —
 The other option is "Exit" which will terminate the service.
 ## API Example
 
@@ -181,7 +181,6 @@ Then, run it by:
 ```
 
 Sample output:
-
 
 
 In the same location (i.e., `.\build\Debug\`) you can also find the library file (`dualsensitive.lib`), and the rest of the binaries: client (`client.exe`), server (`dualsensitive-service.exe`).
