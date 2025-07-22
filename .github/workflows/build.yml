@@ -1,0 +1,36 @@
+name: Build DualSensitive
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022"
+
+    - name: Build Project (Release)
+      run: |
+        cd build
+        cmake --build . --config Release
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: DualSensitive-Binaries
+        path: |
+          build/Release/dualsensitive-service.exe
+          build/Release/solo-test.exe
+          build/Release/client.exe
+          build/Release/dualsensitive.lib
+
