@@ -2,7 +2,8 @@ name: Build DualSensitive
 
 on:
   push:
-    branches: [ main ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -10,8 +11,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout
       uses: actions/checkout@v3
+      with:
+        submodules: recursive
 
     - name: Configure CMake
       run: |
@@ -19,18 +22,22 @@ jobs:
         cd build
         cmake .. -G "Visual Studio 17 2022"
 
-    - name: Build Project (Release)
+    - name: Build Project
       run: |
         cd build
         cmake --build . --config Release
 
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+    - name: Package Binaries
+      run: |
+        mkdir release
+        copy build\Release\*.exe release\
+        copy build\Release\*.lib release\
+        powershell Compress-Archive -Path release\\* -DestinationPath DualSensitive.zip
+
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v2
       with:
-        name: DualSensitive-Binaries
-        path: |
-          build/Release/dualsensitive-service.exe
-          build/Release/solo-test.exe
-          build/Release/client.exe
-          build/Release/dualsensitive.lib
+        files: DualSensitive.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
