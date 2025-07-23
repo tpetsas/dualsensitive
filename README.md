@@ -63,13 +63,20 @@ mkdir build; cd build; cmake .. -G "Visual Studio 17 2022"; cmake --build . --co
 
 The Tray Application when DualSensitive is running on SERVER mode will be in the system tray with the DualSensitive icon as shown here:
 
+![tray-dualsensitive](assets/tray-dualsensitive.png)
+
 There are only two options available at the moment:
+
+![tray-options](assets/tray-options.png)
+
 - **Enable/Disable Adaptive Triggers** —
 Ability to enable or disable the Adaptive Triggers settings via the following provided by right clicking the DualSensitive tray icon.
 
 Here's an example of how the icon will be shown when the "Disable Adaptive Triggers" is selected:
 
-When the "Enable Adaptive Triggers" option is selected again, the tray icon should go back to normal:
+![tray-triggers-disabled.png](assets/tray-triggers-disabled.png)
+
+When the "Enable Adaptive Triggers" option is selected again, the tray icon should go back to normal.
 
 - **Exit** —
 The other option is "Exit" which will terminate the service.
