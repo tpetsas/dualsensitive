@@ -4,6 +4,7 @@
 
 	Contributors of this file:
 	11.2020 Ludwig Füchsl
+	05.2026 Thanasis Petsas
 
 	Licensed under the MIT License (To be found in repository root directory)
 */
@@ -22,6 +23,11 @@
 #include <Hidclass.h>
 #include <SetupAPI.h>
 #include <hidsdi.h>
+
+
+#define SONY_VENDOR_ID 0x054C
+#define DUALSENSE_ID 0x0CE6
+#define DUALSENSE_EDGE_ID 0x0DF2
 
 DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrLength, unsigned int* requiredLength, bool pointerToArray) {
 	// Check for invalid non expected buffer
@@ -87,7 +93,10 @@ DS5W_API DS5W_ReturnValue DS5W::enumDevices(void* ptrBuffer, unsigned int inArrL
 				}
 
 				// Check if ids match
-				if (vendorId == 0x054C && productId == 0x0CE6) {
+				if (vendorId == SONY_VENDOR_ID &&
+						(productId == DUALSENSE_ID ||
+						 productId == DUALSENSE_EDGE_ID)
+				) {
 					// Get pointer to target
 					DS5W::DeviceEnumInfo* ptrInfo = nullptr;
 					if (inputArrIndex < inArrLength) {
@@ -184,7 +193,24 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
+	PHIDP_PREPARSED_DATA ppd = nullptr;
+	if (!HidD_GetPreparsedData(deviceHandle, &ppd)) {
+		CloseHandle(deviceHandle);
+		return DS5W_E_EXTERNAL_WINAPI;
+	}
+
+	HIDP_CAPS caps;
+	if (HidP_GetCaps(ppd, &caps) != HIDP_STATUS_SUCCESS) {
+		HidD_FreePreparsedData(ppd);
+		CloseHandle(deviceHandle);
+		return DS5W_E_EXTERNAL_WINAPI;
+	}
+
 	// Write to conext
+	ptrContext->_internal.inputReportLen   = caps.InputReportByteLength;
+	ptrContext->_internal.outputReportLen  = caps.OutputReportByteLength;
+	ptrContext->_internal.featureReportLen = caps.FeatureReportByteLength;
+	HidD_FreePreparsedData(ppd);
 	ptrContext->_internal.connected = true;
 	ptrContext->_internal.connection = ptrEnumInfo->_internal.connection;
 	ptrContext->_internal.deviceHandle = deviceHandle;
@@ -197,6 +223,9 @@ DS5W_API DS5W_ReturnValue DS5W::initDeviceContext(DS5W::DeviceEnumInfo* ptrEnumI
 		unsigned char fBuffer[64];
 		fBuffer[0] = 0x05;
 		if (!HidD_GetFeature(deviceHandle, fBuffer, 64)) {
+			CloseHandle(deviceHandle);
+			ptrContext->_internal.deviceHandle = NULL;
+			ptrContext->_internal.connected = false;
 			return DS5W_E_BT_COM;
 		}
 		
@@ -221,7 +250,7 @@ DS5W_API void DS5W::freeDeviceContext(DS5W::DeviceContext* ptrContext) {
 		os.leftTriggerEffect.effectType = TriggerEffectType::NoResitance;
 		os.rightTriggerEffect.effectType = TriggerEffectType::NoResitance;
 
-        // reset the new structure for Trigger settings too
+		// reset the new structure for Trigger settings too
 		os.triggerSettingEnabled = false;
 		os.leftTriggerSetting.profile = TriggerProfile::Normal;
 		os.rightTriggerSetting.profile = TriggerProfile::Normal;
@@ -254,6 +283,23 @@ DS5W_API DS5W_ReturnValue DS5W::reconnectDevice(DS5W::DeviceContext* ptrContext)
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
+	// read again caps just to be safe
+	PHIDP_PREPARSED_DATA ppd = nullptr;
+	if (!HidD_GetPreparsedData(deviceHandle, &ppd)) { CloseHandle(deviceHandle); return DS5W_E_EXTERNAL_WINAPI; }
+
+	HIDP_CAPS caps;
+	if (HidP_GetCaps(ppd, &caps) != HIDP_STATUS_SUCCESS) {
+		HidD_FreePreparsedData(ppd);
+		CloseHandle(deviceHandle);
+		return DS5W_E_EXTERNAL_WINAPI;
+	}
+
+	ptrContext->_internal.inputReportLen   = caps.InputReportByteLength;
+	ptrContext->_internal.outputReportLen  = caps.OutputReportByteLength;
+	ptrContext->_internal.featureReportLen = caps.FeatureReportByteLength;
+
+	HidD_FreePreparsedData(ppd);
+
 	// Write to conext
 	ptrContext->_internal.connected = true;
 	ptrContext->_internal.deviceHandle = deviceHandle;
@@ -277,20 +323,20 @@ DS5W_API DS5W_ReturnValue DS5W::getDeviceInputState(DS5W::DeviceContext* ptrCont
 	HidD_FlushQueue(ptrContext->_internal.deviceHandle);
 
 	// Get input report length
-	unsigned short inputReportLength = 0;
+	//unsigned short inputReportLength = 0;
+	unsigned short inputReportLength = ptrContext->_internal.inputReportLen;
 	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
 		// The bluetooth input report is 78 Bytes long
-		inputReportLength = 78;
 		ptrContext->_internal.hidBuffer[0] = 0x31;
 	}
 	else {
 		// The usb input report is 64 Bytes long
-		inputReportLength = 64;
 		ptrContext->_internal.hidBuffer[0] = 0x01;
 	}
 
 	// Get device input
-	if (!ReadFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, inputReportLength, NULL, NULL)) {
+	DWORD bytesRead = 0;
+	if (!ReadFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, inputReportLength, &bytesRead, NULL)) {
 		// Close handle and set error state
 		CloseHandle(ptrContext->_internal.deviceHandle);
 		ptrContext->_internal.deviceHandle = NULL;
@@ -324,16 +370,8 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 		return DS5W_E_DEVICE_REMOVED;
 	}
 
-	// Get otuput report length
-	unsigned short outputReportLength = 0;
-	if (ptrContext->_internal.connection == DS5W::DeviceConnection::BT) {
-		// The bluetooth input report is 547 Bytes long
-		outputReportLength = 547;
-	}
-	else {
-		// The usb input report is 48 Bytes long
-		outputReportLength = 48;
-	}
+	// Get output report length
+	unsigned short outputReportLength = ptrContext->_internal.outputReportLen;
 
 	// Cleat all input data
 	ZeroMemory(ptrContext->_internal.hidBuffer, outputReportLength);
@@ -364,7 +402,8 @@ DS5W_API DS5W_ReturnValue DS5W::setDeviceOutputState(DS5W::DeviceContext* ptrCon
 	}
 
 	// Write to controller
-	if (!WriteFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, outputReportLength, NULL, NULL)) {
+	DWORD bytesWritten = 0;
+	if (!WriteFile(ptrContext->_internal.deviceHandle, ptrContext->_internal.hidBuffer, outputReportLength, &bytesWritten, NULL)) {
 		// Close handle and set error state
 		CloseHandle(ptrContext->_internal.deviceHandle);
 		ptrContext->_internal.deviceHandle = NULL;
