@@ -4,6 +4,7 @@
 
 	Contributors of this file:
 	11.2020 Ludwig Füchsl
+    02.2026 Thanasis Petsas
 
 	Licensed under the MIT License (To be found in repository root directory)
 */
@@ -77,6 +78,29 @@ namespace DS5W {
 			/// HID Input buffer (will be allocated by the context init function)
 			/// </summary>
 			unsigned char hidBuffer[547];
+
+            /// <summary>
+            /// Length in bytes of the HID input report for the currently opened
+            /// device interface (as reported by HIDP_CAPS::InputReportByteLength).
+            /// This may differ between controller models (e.g. DualSense vs Edge).
+            /// </summary>
+            unsigned short inputReportLen;
+
+            /// <summary>
+            /// Length in bytes of the HID output report for the currently opened
+            /// device interface (as reported by HIDP_CAPS::OutputReportByteLength).
+            /// Must be used when writing output reports instead of hardcoded values,
+            /// since different DualSense models expose different USB report sizes.
+            /// </summary>
+            unsigned short outputReportLen;
+
+            /// <summary>
+            /// Length in bytes of the HID feature report for the currently opened
+            /// device interface (as reported by HIDP_CAPS::FeatureReportByteLength).
+            /// Used for feature report communication such as Bluetooth initialization.
+            /// </summary>
+            unsigned short featureReportLen;
+
 		}_internal;
 	} DeviceContext;
 }
