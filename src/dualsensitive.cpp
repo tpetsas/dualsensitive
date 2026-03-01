@@ -267,7 +267,7 @@ void setTriggerProfile(unsigned char *buffer, TriggerProfile profile, std::vecto
             {
                 uint8_t start = extras[0];
                 uint8_t force = extras[1];
-                buffer[0] = static_cast<unsigned char>(TriggerMode::Rigid_B);
+                buffer[0] = static_cast<unsigned char>(TriggerMode::Rigid_A);
                 if (start <= 9 && force <= 8 && force > 0) {
                     uint8_t b = (force - 1) & 7;
                     uint32_t num = 0; uint16_t num2 = 0;
